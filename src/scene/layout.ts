@@ -42,14 +42,14 @@ export const PHONE = {
 };
 
 export const CAMERA = {
-	fov: 45,
+	fov: 40,
 	// where the camera starts before gliding in to the computer
 	intro: {
 		position: new THREE.Vector3(0.05, 1.3, 0.75),
 		target: new THREE.Vector3(0, 1.0, -0.6),
 	},
 	// how much of the view the screen fills (1 = edge to edge). A bit under 1 keeps the bezel in view.
-	pcFill: 0.93,
+	pcFill: 0.99,
 	phoneFill: 0.92,
 };
 

@@ -1,33 +1,41 @@
-// Start menu: side rail, alphabetical app list, and live tiles.
+// Start menu (Windows 11 style): search, pinned apps, recommended, and the user / power row.
+// "All apps" switches the pinned grid to an alphabetical list.
+import { useState } from "react";
 import { useOs, type AppId } from "./osStore";
 import {
-  BrowserIcon, CalcIcon, CalendarIcon, DocGlyph, ExplorerIcon, GearGlyph, MailIcon, MenuGlyph,
-  PhotosIcon, PictureGlyph, PowerGlyph, SettingsIcon, UserGlyph, WeatherIcon, BinIcon,
+  BinIcon, BrowserIcon, CalcIcon, CalendarIcon, ChevronRightGlyph, BackGlyph, ClockIcon, ExplorerIcon,
+  MailIcon, PhotosIcon, PowerGlyph, SearchGlyph, SecurityIcon, SettingsIcon, UserGlyph, WeatherIcon,
+  type IconComponent,
 } from "./icons";
 import { useT } from "../../i18n/strings";
 
-type Entry = { key: keyof ReturnType<typeof useT>["apps"]; Icon: (p: { size?: number }) => JSX.Element; app?: AppId };
+type Entry = { key: keyof ReturnType<typeof useT>["apps"]; Icon: IconComponent; app?: AppId };
+
+const ENTRIES: Entry[] = [
+  { key: "mail", Icon: MailIcon, app: "mail" },
+  { key: "browser", Icon: BrowserIcon, app: "browser" },
+  { key: "files", Icon: ExplorerIcon, app: "files" },
+  { key: "security", Icon: SecurityIcon },
+  { key: "settings", Icon: SettingsIcon },
+  { key: "photos", Icon: PhotosIcon },
+  { key: "calendar", Icon: CalendarIcon },
+  { key: "weather", Icon: WeatherIcon },
+  { key: "clock", Icon: ClockIcon },
+  { key: "calculator", Icon: CalcIcon },
+  { key: "bin", Icon: BinIcon, app: "bin" },
+];
 
 export function StartMenu() {
   const open = useOs((s) => s.startOpen);
   const { openApp, notify, setStart } = useOs.getState();
   const t = useT();
+  const [all, setAll] = useState(false);
+  const [query, setQuery] = useState("");
   if (!open) return null;
 
-  const entries: Entry[] = [
-    { key: "browser", Icon: BrowserIcon, app: "browser" },
-    { key: "calculator", Icon: CalcIcon },
-    { key: "calendar", Icon: CalendarIcon },
-    { key: "files", Icon: ExplorerIcon, app: "files" },
-    { key: "mail", Icon: MailIcon, app: "mail" },
-    { key: "photos", Icon: PhotosIcon },
-    { key: "bin", Icon: BinIcon, app: "bin" },
-    { key: "settings", Icon: SettingsIcon },
-    { key: "weather", Icon: WeatherIcon },
-  ];
-  const sorted = [...entries].sort((a, b) => t.apps[a.key].localeCompare(t.apps[b.key]));
-
   const launch = (e: Entry) => {
+    setQuery("");
+    setAll(false);
     if (e.app) openApp(e.app);
     else {
       setStart(false);
@@ -35,64 +43,85 @@ export function StartMenu() {
     }
   };
 
-  const tiles: { e: Entry; wide?: boolean; tone: string }[] = [
-    { e: entries[4], wide: true, tone: "tile--blue" },
-    { e: entries[2], tone: "tile--slate" },
-    { e: entries[0], tone: "tile--teal" },
-    { e: entries[3], tone: "tile--amber" },
-    { e: entries[5], tone: "tile--slate" },
-  ];
-  const tiles2: { e: Entry; wide?: boolean; tone: string }[] = [
-    { e: entries[8], wide: true, tone: "tile--sky" },
-    { e: entries[7], tone: "tile--slate" },
-  ];
+  const q = query.trim().toLowerCase();
+  const sorted = [...ENTRIES].sort((a, b) => t.apps[a.key].localeCompare(t.apps[b.key]));
+  const results = q ? sorted.filter((e) => t.apps[e.key].toLowerCase().includes(q)) : null;
 
   let lastLetter = "";
   return (
     <div className="start" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Start">
-      <nav className="start__rail">
-        <button className="start__rail-btn" title="Menu"><MenuGlyph /></button>
-        <span className="start__spacer" />
-        <button className="start__rail-btn" title={t.startUser}><UserGlyph /></button>
-        <button className="start__rail-btn" title={t.startDocs}><DocGlyph /></button>
-        <button className="start__rail-btn" title={t.startPics}><PictureGlyph /></button>
-        <button className="start__rail-btn" title={t.startSettings}><GearGlyph /></button>
-        <button className="start__rail-btn" title={t.startPower}><PowerGlyph /></button>
-      </nav>
+      <label className="start__search">
+        <SearchGlyph size={15} />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t.startSearch} aria-label={t.startSearch} />
+      </label>
 
-      <div className="start__list">
-        {sorted.map((e) => {
-          const name = t.apps[e.key];
-          const letter = name[0].toUpperCase();
-          const header = letter !== lastLetter;
-          lastLetter = letter;
-          return (
-            <div key={e.key}>
-              {header && <div className="start__letter">{letter}</div>}
-              <button className="start__item" onClick={() => launch(e)}>
-                <span className="start__item-icon"><e.Icon size={24} /></span>
-                {name}
+      <div className="start__body">
+        {results ? (
+          <div className="start__list">
+            {results.map((e) => (
+              <button key={e.key} className="start__item" onClick={() => launch(e)}>
+                <e.Icon size={28} />
+                {t.apps[e.key]}
+              </button>
+            ))}
+          </div>
+        ) : all ? (
+          <>
+            <div className="start__head">
+              <h3>{t.allApps}</h3>
+              <button className="start__pill" onClick={() => setAll(false)}>
+                <BackGlyph size={12} className="start__flip" /> {t.pinned}
               </button>
             </div>
-          );
-        })}
-      </div>
-
-      <div className="start__tiles">
-        {[{ title: t.startTilesTitle, list: tiles }, { title: t.tilesTitle2, list: tiles2 }].map((g) => (
-          <section key={g.title}>
-            <h3 className="start__group">{g.title}</h3>
-            <div className="start__grid">
-              {g.list.map(({ e, wide, tone }) => (
-                <button key={e.key} className={`tile ${tone} ${wide ? "tile--wide" : ""}`} onClick={() => launch(e)}>
-                  <e.Icon size={wide ? 40 : 34} />
-                  <span className="tile__label">{t.apps[e.key]}</span>
+            <div className="start__list">
+              {sorted.map((e) => {
+                const name = t.apps[e.key];
+                const letter = name[0].toUpperCase();
+                const header = letter !== lastLetter;
+                lastLetter = letter;
+                return (
+                  <div key={e.key}>
+                    {header && <div className="start__letter">{letter}</div>}
+                    <button className="start__item" onClick={() => launch(e)}>
+                      <e.Icon size={28} />
+                      {name}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="start__head">
+              <h3>{t.pinned}</h3>
+              <button className="start__pill" onClick={() => setAll(true)}>
+                {t.allApps} <ChevronRightGlyph size={12} className="start__flip" />
+              </button>
+            </div>
+            <div className="start__pinned">
+              {ENTRIES.map((e) => (
+                <button key={e.key} className="start__app" onClick={() => launch(e)}>
+                  <e.Icon size={36} />
+                  <span>{t.apps[e.key]}</span>
                 </button>
               ))}
             </div>
-          </section>
-        ))}
+            <div className="start__head">
+              <h3>{t.recommended}</h3>
+            </div>
+            <p className="start__empty">{t.recommendedEmpty}</p>
+          </>
+        )}
       </div>
+
+      <footer className="start__foot">
+        <button className="start__user">
+          <span className="start__avatar"><UserGlyph size={18} /></span>
+          {t.userName}
+        </button>
+        <button className="start__power" title={t.startPower} aria-label={t.startPower}><PowerGlyph size={18} /></button>
+      </footer>
     </div>
   );
 }

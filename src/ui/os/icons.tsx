@@ -1,67 +1,77 @@
-// Icons for the computer and phone, drawn as inline SVG (no image files).
-// App icons use a 48x48 grid; small UI glyphs use 16x16 and take the text color.
+// Icons for the computer and phone.
+// App and folder icons are the Windows icons from src/assets/Icons, converted to PNG
+// by tools/icons/convert_icons.py. Small UI glyphs are inline SVG (16x16, take the text color).
 import type { SVGProps } from "react";
+import mailPng from "../../assets/os-icons/mail.png";
+import browserPng from "../../assets/os-icons/browser.png";
+import explorerPng from "../../assets/os-icons/explorer.png";
+import binEmptyPng from "../../assets/os-icons/bin-empty.png";
+import binFullPng from "../../assets/os-icons/bin-full.png";
+import settingsPng from "../../assets/os-icons/settings.png";
+import photosPng from "../../assets/os-icons/photos.png";
+import weatherPng from "../../assets/os-icons/weather.png";
+import clockPng from "../../assets/os-icons/clock.png";
+import securityPng from "../../assets/os-icons/security.png";
+import folderPng from "../../assets/os-icons/folder.png";
+import folderDocumentsPng from "../../assets/os-icons/folder-documents.png";
+import folderDownloadsPng from "../../assets/os-icons/folder-downloads.png";
+import folderMusicPng from "../../assets/os-icons/folder-music.png";
+import folderPicturesPng from "../../assets/os-icons/folder-pictures.png";
+import folderVideosPng from "../../assets/os-icons/folder-videos.png";
+import folderZipPng from "../../assets/os-icons/folder-zip.png";
 
 type P = SVGProps<SVGSVGElement> & { size?: number };
+export type IconProps = { size?: number; className?: string };
+export type IconComponent = (p: IconProps) => JSX.Element;
+
 const app = ({ size = 48, ...p }: P) => ({ width: size, height: size, viewBox: "0 0 48 48", ...p });
 const ui = ({ size = 16, ...p }: P) => ({
   width: size, height: size, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor",
   strokeWidth: 1.2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, ...p,
 });
 
+/** An icon component that shows one of the PNG icons at `size` px. */
+const png = (src: string): IconComponent => ({ size = 48, className }) => (
+  <img src={src} width={size} height={size} className={`os-img ${className ?? ""}`} alt="" draggable={false} />
+);
+
 /* ---------------- app icons ---------------- */
 
-export const MailIcon = (p: P) => (
-  <svg {...app(p)}>
-    <rect x="4" y="10" width="40" height="28" rx="3" fill="#1d6fd8" />
-    <path d="M4.8 11.5 24 26.5l19.2-15" fill="none" stroke="#bfe0ff" strokeWidth="2.4" strokeLinejoin="round" />
-    <path d="M5 37 19 23M43 37 29 23" stroke="#5aa2f0" strokeWidth="1.6" />
-  </svg>
-);
+export const MailIcon = png(mailPng);
+export const BrowserIcon = png(browserPng);
+export const ExplorerIcon = png(explorerPng);
+export const BinIcon = png(binEmptyPng);
+export const BinFullIcon = png(binFullPng);
+export const SettingsIcon = png(settingsPng);
+export const PhotosIcon = png(photosPng);
+export const WeatherIcon = png(weatherPng);
+export const ClockIcon = png(clockPng);
+export const SecurityIcon = png(securityPng);
 
-export const BrowserIcon = (p: P) => (
+/* folder icons, by folder */
+export const FolderIcon = png(folderPng);
+export const FOLDER_ICONS = {
+  desktop: png(folderPng),
+  documents: png(folderDocumentsPng),
+  downloads: png(folderDownloadsPng),
+  music: png(folderMusicPng),
+  pictures: png(folderPicturesPng),
+  videos: png(folderVideosPng),
+} as const;
+export const ZipIcon = png(folderZipPng);
+
+/** Hard drive (no icon for it in the set, so drawn in the same style). */
+export const DriveIcon = (p: P) => (
   <svg {...app(p)}>
     <defs>
-      <linearGradient id="br-g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stopColor="#35d0c0" />
-        <stop offset="1" stopColor="#0f6fb8" />
+      <linearGradient id="drv-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#e9edf2" />
+        <stop offset="1" stopColor="#b9c2cc" />
       </linearGradient>
     </defs>
-    <circle cx="24" cy="24" r="19" fill="url(#br-g)" />
-    <ellipse cx="24" cy="24" rx="8" ry="19" fill="none" stroke="#e8fbff" strokeWidth="1.8" opacity=".85" />
-    <path d="M5.5 19h37M5.5 29h37" stroke="#e8fbff" strokeWidth="1.8" opacity=".85" />
-    <circle cx="24" cy="24" r="19" fill="none" stroke="#0a4f86" strokeWidth="1" />
-  </svg>
-);
-
-export const FolderIcon = (p: P) => (
-  <svg {...app(p)}>
-    <path d="M4 12a3 3 0 0 1 3-3h11l4 4h19a3 3 0 0 1 3 3v3H4z" fill="#d9a520" />
-    <rect x="4" y="16" width="40" height="24" rx="3" fill="#f7c948" />
-    <rect x="4" y="16" width="40" height="3" fill="#ffe08a" opacity=".7" />
-  </svg>
-);
-
-export const ExplorerIcon = (p: P) => (
-  <svg {...app(p)}>
-    <path d="M4 12a3 3 0 0 1 3-3h11l4 4h19a3 3 0 0 1 3 3v3H4z" fill="#d9a520" />
-    <rect x="4" y="16" width="40" height="24" rx="3" fill="#f7c948" />
-    <rect x="10" y="26" width="28" height="8" rx="1.5" fill="#2b79d6" />
-  </svg>
-);
-
-export const BinIcon = (p: P) => (
-  <svg {...app(p)}>
-    <path d="M12 14h24l-2.5 27a3 3 0 0 1-3 2.7H17.5a3 3 0 0 1-3-2.7z" fill="#dfe6ee" stroke="#9aa8b6" strokeWidth="1.4" />
-    <path d="M10 13h28" stroke="#9aa8b6" strokeWidth="3" strokeLinecap="round" />
-    <path d="M20 19v19M24 19v19M28 19v19" stroke="#b4c0cc" strokeWidth="1.4" />
-  </svg>
-);
-
-export const SettingsIcon = (p: P) => (
-  <svg {...app(p)}>
-    <circle cx="24" cy="24" r="12" fill="none" stroke="#8a96a3" strokeWidth="5" strokeDasharray="5 4.4" />
-    <circle cx="24" cy="24" r="8" fill="none" stroke="#c4ccd4" strokeWidth="3" />
+    <rect x="5" y="16" width="38" height="18" rx="3" fill="url(#drv-g)" stroke="#8d98a5" />
+    <rect x="9" y="27" width="20" height="3" rx="1.5" fill="#6b7682" />
+    <circle cx="37" cy="28.5" r="2" fill="#3fb950" />
   </svg>
 );
 
@@ -83,30 +93,10 @@ export const CalendarIcon = (p: P) => (
   </svg>
 );
 
-export const PhotosIcon = (p: P) => (
-  <svg {...app(p)}>
-    <rect x="6" y="9" width="36" height="30" rx="3" fill="#2c7be5" />
-    <circle cx="17" cy="19" r="4" fill="#ffe07a" />
-    <path d="M6 34 18 24l8 7 6-5 10 8v2a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" fill="#7cc0ff" />
-  </svg>
-);
 
-export const WeatherIcon = (p: P) => (
-  <svg {...app(p)}>
-    <circle cx="19" cy="19" r="8" fill="#ffc83d" />
-    <path d="M16 38h20a7 7 0 0 0 0-14 9 9 0 0 0-17 3 5.5 5.5 0 0 0-3 11z" fill="#eef3f8" />
-  </svg>
-);
 
 /* ---------------- UI glyphs ---------------- */
 
-export const StartGlyph = (p: P) => (
-  // Nova OS mark: a diamond split in two, not the Windows logo
-  <svg {...ui({ ...p, strokeWidth: 0 })}>
-    <path d="M8 1.5 14.5 8 8 14.5z" fill="currentColor" />
-    <path d="M8 1.5 1.5 8 8 14.5z" fill="currentColor" opacity=".55" />
-  </svg>
-);
 export const SearchGlyph = (p: P) => (
   <svg {...ui(p)}><circle cx="9.5" cy="6.5" r="4.5" /><path d="M6.3 9.7 2 14" /></svg>
 );
@@ -154,7 +144,23 @@ export const ShieldGlyph = (p: P) => <svg {...ui(p)}><path d="M8 1.8 13 3.6v4.1c
 export const BluetoothGlyph = (p: P) => <svg {...ui(p)}><path d="m4.5 5 7 6-3.5 3V2l3.5 3-7 6" /></svg>;
 export const InfoGlyph = (p: P) => <svg {...ui(p)}><circle cx="8" cy="8" r="6" /><path d="M8 7.2v4M8 4.8v.1" /></svg>;
 
-// Window caption buttons (thin, like the Windows 10 title bar)
+export const CutGlyph = (p: P) => <svg {...ui(p)}><circle cx="4.5" cy="12" r="2" /><circle cx="11.5" cy="12" r="2" /><path d="M6 10.6 11.5 2M10 10.6 4.5 2" /></svg>;
+export const CopyGlyph = (p: P) => <svg {...ui(p)}><rect x="5" y="5" width="8.5" height="9" rx="1.2" /><path d="M3 11V3.2C3 2.5 3.5 2 4.2 2H10" /></svg>;
+export const PasteGlyph = (p: P) => <svg {...ui(p)}><path d="M5.5 3H4a1 1 0 0 0-1 1v9.5a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-1.5" /><rect x="5.5" y="1.8" width="5" height="2.6" rx=".8" /></svg>;
+export const RenameGlyph = (p: P) => <svg {...ui(p)}><rect x="1.5" y="5" width="13" height="6" rx="1" /><path d="M5 7v2" /></svg>;
+export const ShareGlyph = (p: P) => <svg {...ui(p)}><path d="M9.5 2.5H13.5V6.5M13.5 2.5 7 9M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3" /></svg>;
+export const TrashGlyph = (p: P) => <svg {...ui(p)}><path d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4M6.8 6.5v4.5M9.2 6.5v4.5" /></svg>;
+export const SortGlyph = (p: P) => <svg {...ui(p)}><path d="M4.5 2.5v11M2 11l2.5 2.5L7 11M11.5 13.5v-11M9 5l2.5-2.5L14 5" /></svg>;
+export const ViewGlyph = (p: P) => <svg {...ui(p)}><rect x="2" y="2" width="5" height="5" rx="1" /><rect x="9" y="2" width="5" height="5" rx="1" /><rect x="2" y="9" width="5" height="5" rx="1" /><rect x="9" y="9" width="5" height="5" rx="1" /></svg>;
+export const MoreGlyph = (p: P) => <svg {...ui(p)}><circle cx="3.5" cy="8" r=".9" fill="currentColor" /><circle cx="8" cy="8" r=".9" fill="currentColor" /><circle cx="12.5" cy="8" r=".9" fill="currentColor" /></svg>;
+export const HomeGlyph = (p: P) => <svg {...ui(p)}><path d="M2.5 7.5 8 2.5l5.5 5M4 6.5v7h3v-4h2v4h3v-7" /></svg>;
+export const RestoreItemsGlyph = (p: P) => <svg {...ui(p)}><path d="M3 8a5 5 0 1 0 1.5-3.6M3 2.5v2.8h2.8" /></svg>;
+export const FilterGlyph = (p: P) => <svg {...ui(p)}><path d="M2 3.5h12M4.5 8h7M7 12.5h2" /></svg>;
+export const FlagGlyph = (p: P) => <svg {...ui(p)}><path d="M3.5 14V2.5M3.5 3h8l-1.8 3 1.8 3h-8" /></svg>;
+export const ArchiveGlyph = (p: P) => <svg {...ui(p)}><rect x="1.8" y="2.5" width="12.4" height="3" rx=".8" /><path d="M2.8 5.5v7a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1v-7M6.3 8.5h3.4" /></svg>;
+export const ReplyGlyph = (p: P) => <svg {...ui(p)}><path d="M6.5 3.5 2.5 7.5l4 4M2.5 7.5h7a4 4 0 0 1 4 4v1" /></svg>;
+
+// Window caption buttons (thin, like the Windows title bar)
 export const MinGlyph = () => <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5.5h10" stroke="currentColor" /></svg>;
 export const MaxGlyph = () => <svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor" /></svg>;
 export const RestoreGlyph = () => (
@@ -163,9 +169,9 @@ export const RestoreGlyph = () => (
 export const CloseGlyph = () => <svg width="10" height="10" viewBox="0 0 10 10"><path d="m.5.5 9 9m0-9-9 9" stroke="currentColor" /></svg>;
 
 /** App id -> icon, used by the desktop, taskbar and Start menu. */
-export const APP_ICONS = {
+export const APP_ICONS: Record<"mail" | "browser" | "files" | "bin", IconComponent> = {
   mail: MailIcon,
   browser: BrowserIcon,
   files: ExplorerIcon,
   bin: BinIcon,
-} as const;
+};

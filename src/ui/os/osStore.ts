@@ -25,13 +25,13 @@ export interface Note {
 // The desktop is laid out at this size and scaled to fit the 3D screen.
 export const DESKTOP_W = 1440;
 export const DESKTOP_H = 800;
-export const TASKBAR_H = 40;
+export const TASKBAR_H = 48;
 
 const DEFAULT_SIZE: Record<AppId, { w: number; h: number }> = {
   mail: { w: 1080, h: 620 },
   browser: { w: 1040, h: 620 },
-  files: { w: 860, h: 520 },
-  bin: { w: 760, h: 460 },
+  files: { w: 940, h: 600 },
+  bin: { w: 820, h: 500 },
 };
 
 interface OsState {

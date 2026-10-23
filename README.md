@@ -1,7 +1,7 @@
 # CyberDesk — Step 1: the desk
 
 A first-person cybersecurity awareness game. This step contains the scene and the two
-device interfaces: a Windows 10-style computer (Nova OS) and an Android-style phone,
+device interfaces: a Windows 11-style computer (Arc OS) and an Android-style phone,
 with two close-up views you switch between with the arrow keys. The scene is set late at night.
 
 ## Run it
@@ -21,9 +21,9 @@ Open the address it prints (usually http://localhost:5173) in Chrome, Edge or Fi
 - `→` or the tab on the right edge: look at the computer
 - **EN / عربي** (top corner): switch language (Arabic mirrors everything, like Arabic Windows/Android)
 
-On the computer: double-click desktop icons, use the Start menu, drag windows by their
-title bar, double-click a title bar to maximize, use the taskbar to switch/minimize, and the
-thin strip at the far end of the taskbar to show the desktop. Mail, Browser, File Explorer and
+On the computer: double-click desktop icons, use the Start menu (search, Pinned, All apps), drag
+windows by their title bar, double-click a title bar to maximize, use the taskbar to switch/minimize,
+and the thin strip at the far end of the taskbar to show the desktop. Mail, Browser, File Explorer and
 Recycle Bin open; the other Start menu apps show a "not available yet" notification.
 
 On the phone: Phone (dial pad), Messages, Authenticator and Settings open; tap the bar at the
@@ -64,12 +64,16 @@ cyberdesk/
 │  │     ├─ Window.tsx        window frame: drag, title bar buttons
 │  │     ├─ Taskbar.tsx       Start button, search, apps, tray, clock
 │  │     ├─ StartMenu.tsx     app list + tiles
-│  │     ├─ icons.tsx         all icons as inline SVG
+│  │     ├─ icons.tsx         app/folder icons (PNGs from assets/os-icons) and small SVG glyphs
 │  │     └─ apps/             MailApp, BrowserApp, FilesApp (also the Recycle Bin)
 │  └─ assets/
 │     ├─ models/              desktop.glb, monitor.glb, phone.glb (from your .blend files)
+│     ├─ Icons/               your Windows .ico files (source)
+│     ├─ os-icons/            those icons as 128 px PNGs, used by the computer
 │     └─ textures/            desk (wood_table_worn) and wall (plastered_wall_03) maps, 2K/1K
-└─ tools/blender/             the scripts that converted the .blend files
+└─ tools/
+   ├─ blender/                the scripts that converted the .blend files
+   └─ icons/convert_icons.py  makes assets/os-icons from assets/Icons (which .ico is used for what)
 ```
 
 ## How the screens work
@@ -96,12 +100,14 @@ useOs.getState().notify("Mail", "You have 1 new email");
 | Overall brightness | `toneMappingExposure` in `src/scene/DeskScene.tsx` |
 | Lamp / monitor glow | the `pointLight` lines in `src/scene/Room.tsx` |
 | Wallpaper | `.os__wallpaper` in `src/styles.css` (and `drawWallpaper` in `screenTextures.ts` to match) |
+| Old-CRT screen look (scanlines, grain, rolling band, corners) | `.crt` and `.screen--crt` in `src/styles.css` (and `drawCrt` in `screenTextures.ts` to match) |
+| Arc logo | `src/ui/os/ArcLogo.tsx` |
 | Desk / wall brightness and texture size | the `color` on the desk and wall materials, and `WOOD_TILE` / `WALL_TILE`, in `src/scene/Room.tsx` |
 | Accent color (buttons, window border) | `--os-accent` at the top of `src/styles.css` |
 | Default window sizes | `DEFAULT_SIZE` in `src/ui/os/osStore.ts` |
 
 The computer uses the Segoe UI font when it's installed (it is on every Windows PC),
-so on Windows it looks exactly like Windows 10. Elsewhere it falls back to IBM Plex Sans.
+so on Windows it looks exactly like Windows 11. Elsewhere it falls back to IBM Plex Sans.
 
 ## About the 3D models
 

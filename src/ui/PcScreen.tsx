@@ -19,12 +19,14 @@ export function PcScreen() {
 
   const scale = rect.w / DESKTOP_W;
   return (
-    <div className="screen" style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }}>
+    <div className="screen screen--crt" style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }}>
       <div className="screen__scaler" style={{ transform: `scale(${scale})` }}>
         <ScaleContext.Provider value={scale}>
           <Desktop />
         </ScaleContext.Provider>
       </div>
+      {/* old-CRT look on top (click-through); the 3D screen draws the same in screenTextures.ts */}
+      <div className="crt" aria-hidden="true" />
     </div>
   );
 }

@@ -1,18 +1,16 @@
-// File Explorer: ribbon, address bar, navigation pane and folder view.
+// File Explorer: address bar, command bar, navigation pane and folder view.
 // Also used for the Recycle Bin (mode="bin").
 import { useState } from "react";
-import { BackGlyph, ChevronRightGlyph, DocGlyph, DownloadGlyph, FolderIcon, ForwardGlyph, MusicGlyph, PcGlyph, PictureGlyph, SearchGlyph, StarGlyph, UpGlyph, VideoGlyph, BinIcon } from "../icons";
+import {
+  BackGlyph, BinIcon, ChevronRightGlyph, CopyGlyph, CutGlyph, DriveIcon, FOLDER_ICONS, ForwardGlyph,
+  HomeGlyph, MoreGlyph, PasteGlyph, PcGlyph, PlusGlyph, ReloadGlyph, RenameGlyph, RestoreItemsGlyph,
+  SearchGlyph, ShareGlyph, SortGlyph, TrashGlyph, UpGlyph, ViewGlyph,
+} from "../icons";
+import { useOs } from "../osStore";
 import { useT } from "../../../i18n/strings";
 
-type FolderKey = "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
-const FOLDERS: { key: FolderKey; Glyph: (p: { size?: number }) => JSX.Element }[] = [
-  { key: "desktop", Glyph: PcGlyph },
-  { key: "documents", Glyph: DocGlyph },
-  { key: "downloads", Glyph: DownloadGlyph },
-  { key: "music", Glyph: MusicGlyph },
-  { key: "pictures", Glyph: PictureGlyph },
-  { key: "videos", Glyph: VideoGlyph },
-];
+type FolderKey = keyof typeof FOLDER_ICONS;
+const FOLDERS: FolderKey[] = ["desktop", "downloads", "documents", "pictures", "music", "videos"];
 
 /** What's inside each folder. Empty for now; the download events will add files here. */
 const CONTENTS: Record<FolderKey, string[]> = {
@@ -26,9 +24,11 @@ const CONTENTS: Record<FolderKey, string[]> = {
 
 export function FilesApp({ mode = "files" }: { mode?: "files" | "bin" }) {
   const t = useT();
+  const openApp = useOs((s) => s.openApp);
   const [path, setPath] = useState<FolderKey | null>(null); // null = This PC
   const [history, setHistory] = useState<(FolderKey | null)[]>([]);
   const open = (p: FolderKey | null) => {
+    if (p === path) return;
     setHistory((h) => [...h, path]);
     setPath(p);
   };
@@ -38,69 +38,124 @@ export function FilesApp({ mode = "files" }: { mode?: "files" | "bin" }) {
     setHistory((h) => h.slice(0, -1));
   };
 
-  const here = mode === "bin" ? t.apps.bin : path ? t.folders[path] : t.thisPc;
-  const items = mode === "bin" ? [] : path ? CONTENTS[path] : FOLDERS;
+  const bin = mode === "bin";
+  const here = bin ? t.apps.bin : path ? t.folders[path] : t.thisPc;
+  const count = bin ? 0 : path ? CONTENTS[path].length : FOLDERS.length + 1;
+  const HereIcon = path ? FOLDER_ICONS[path] : null;
+
+  // the command bar: the usual commands, greyed out because nothing is selected
+  const commands = bin
+    ? [{ label: t.cmd.emptyBin, Glyph: TrashGlyph }, { label: t.cmd.restoreAll, Glyph: RestoreItemsGlyph }]
+    : null;
 
   return (
     <div className="files">
-      <div className="files__ribbon">
-        <button className="files__file">{t.ribbon.file}</button>
-        <button>{t.ribbon.home}</button>
-        <button>{t.ribbon.share}</button>
-        <button>{t.ribbon.view}</button>
-      </div>
       <div className="files__bar">
         <button className="files__nav" onClick={back} disabled={!history.length} aria-label="Back"><BackGlyph /></button>
         <button className="files__nav" disabled aria-label="Forward"><ForwardGlyph /></button>
-        <button className="files__nav" onClick={() => path && open(null)} disabled={!path} aria-label="Up"><UpGlyph /></button>
+        <button className="files__nav" onClick={() => path && open(null)} disabled={bin || !path} aria-label="Up"><UpGlyph /></button>
+        <button className="files__nav" aria-label="Refresh"><ReloadGlyph /></button>
         <div className="files__crumbs">
-          {mode === "bin" ? <BinIcon size={16} /> : <PcGlyph />}
-          <ChevronRightGlyph size={12} />
-          {mode === "bin" ? <span>{t.apps.bin}</span> : (
+          {bin ? <BinIcon size={18} /> : HereIcon ? <HereIcon size={18} /> : <PcGlyph />}
+          <ChevronRightGlyph size={12} className="files__chev" />
+          {bin ? <span>{t.apps.bin}</span> : (
             <>
               <button onClick={() => path && open(null)}>{t.thisPc}</button>
-              {path && (<><ChevronRightGlyph size={12} /><span>{t.folders[path]}</span></>)}
+              {path && (<><ChevronRightGlyph size={12} className="files__chev" /><span>{t.folders[path]}</span></>)}
             </>
           )}
         </div>
         <label className="files__search">
-          <input placeholder={t.searchIn(here)} aria-label={t.searchIn(here)} />
           <SearchGlyph size={14} />
+          <input placeholder={t.searchIn(here)} aria-label={t.searchIn(here)} />
         </label>
+      </div>
+
+      <div className="files__cmds">
+        {commands ? (
+          commands.map((c) => (
+            <button key={c.label} className="files__cmd" disabled><c.Glyph /> {c.label}</button>
+          ))
+        ) : (
+          <>
+            <button className="files__cmd files__cmd--new"><PlusGlyph /> {t.cmd.new}</button>
+            <span className="files__sep" />
+            {[
+              { label: t.cmd.cut, Glyph: CutGlyph },
+              { label: t.cmd.copy, Glyph: CopyGlyph },
+              { label: t.cmd.paste, Glyph: PasteGlyph },
+              { label: t.cmd.rename, Glyph: RenameGlyph },
+              { label: t.cmd.share, Glyph: ShareGlyph },
+              { label: t.cmd.delete, Glyph: TrashGlyph },
+            ].map((c) => (
+              <button key={c.label} className="files__cmd files__cmd--icon" disabled title={c.label} aria-label={c.label}><c.Glyph /></button>
+            ))}
+            <span className="files__sep" />
+            <button className="files__cmd"><SortGlyph /> {t.cmd.sort}</button>
+            <button className="files__cmd"><ViewGlyph /> {t.cmd.view}</button>
+          </>
+        )}
+        <button className="files__cmd files__cmd--icon" aria-label="More"><MoreGlyph /></button>
       </div>
 
       <div className="files__main">
         <nav className="files__tree">
-          <div className="files__tree-head"><StarGlyph size={14} /> {t.quickAccess}</div>
-          {FOLDERS.slice(0, 3).concat(FOLDERS[4]).map((f) => (
-            <button key={f.key} className={`files__tree-item ${path === f.key && mode === "files" ? "on" : ""}`} onClick={() => mode === "files" && open(f.key)}>
-              <f.Glyph size={14} /> {t.folders[f.key]}
-            </button>
-          ))}
-          <div className="files__tree-head"><PcGlyph size={14} /> {t.thisPc}</div>
-          {FOLDERS.map((f) => (
-            <button key={`pc-${f.key}`} className="files__tree-item files__tree-item--sub" onClick={() => mode === "files" && open(f.key)}>
-              <f.Glyph size={14} /> {t.folders[f.key]}
-            </button>
-          ))}
+          <button className={`files__tree-item ${!bin && !path ? "on" : ""}`} onClick={() => (bin ? openApp("files") : open(null))}>
+            <HomeGlyph size={15} /> {t.home}
+          </button>
+          <span className="files__tree-sep" />
+          {FOLDERS.map((f) => {
+            const Icon = FOLDER_ICONS[f];
+            return (
+              <button key={f} className={`files__tree-item ${!bin && path === f ? "on" : ""}`} onClick={() => !bin && open(f)}>
+                <Icon size={18} /> {t.folders[f]}
+              </button>
+            );
+          })}
+          <span className="files__tree-sep" />
+          <button className="files__tree-item" onClick={() => !bin && open(null)}><PcGlyph size={15} /> {t.thisPc}</button>
+          <button className={`files__tree-item ${bin ? "on" : ""}`} onClick={() => openApp("bin")}><BinIcon size={18} /> {t.apps.bin}</button>
         </nav>
 
         <section className="files__view">
-          {items.length ? (
-            <div className="files__grid">
-              {(items as typeof FOLDERS).map((f) => (
-                <button key={f.key} className="files__item" onDoubleClick={() => open(f.key)}>
-                  <FolderIcon size={56} />
-                  <span>{t.folders[f.key]}</span>
-                </button>
-              ))}
+          {bin ? (
+            <div className="files__empty">
+              <BinIcon size={96} />
+              <span>{t.binEmpty}</span>
             </div>
-          ) : (
-            <p className="files__empty">{mode === "bin" ? t.binEmpty : t.emptyFolder}</p>
+          ) : !path ? (
+            <>
+              <h3 className="files__group">{t.foldersTitle}</h3>
+              <div className="files__grid">
+                {FOLDERS.map((f) => {
+                  const Icon = FOLDER_ICONS[f];
+                  return (
+                    <button key={f} className="files__item" onDoubleClick={() => open(f)} onKeyDown={(e) => e.key === "Enter" && open(f)}>
+                      <Icon size={64} />
+                      <span>{t.folders[f]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <h3 className="files__group">{t.drivesTitle}</h3>
+              <button className="files__drive">
+                <DriveIcon size={52} />
+                <span className="files__drive-info">
+                  <strong>{t.localDisk}</strong>
+                  <span className="files__meter"><i style={{ width: "53%" }} /></span>
+                  <small>{t.diskFree}</small>
+                </span>
+              </button>
+            </>
+          ) : CONTENTS[path].length ? null : (
+            <div className="files__empty">
+              {HereIcon && <HereIcon size={96} />}
+              <span>{t.emptyFolder}</span>
+            </div>
           )}
         </section>
       </div>
-      <div className="files__status">{t.items(items.length)}</div>
+      <div className="files__status">{t.items(count)}</div>
     </div>
   );
 }

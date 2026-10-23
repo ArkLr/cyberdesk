@@ -89,7 +89,7 @@ export function Desktop() {
 							}}
 							onKeyDown={(e) => e.key === "Enter" && openApp(a)}
 						>
-							<Icon size={44} />
+							<Icon size={48} />
 							<span>{t.apps[a]}</span>
 						</button>
 					);

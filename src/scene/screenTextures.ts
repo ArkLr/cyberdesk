@@ -23,26 +23,54 @@ const clock = () =>
 		minute: "2-digit",
 	});
 
-/** Same wallpaper as .os__wallpaper in styles.css */
-/** Rough stand-in for the GradientASCII wallpaper, shown while the camera moves. */
+/** Same light blue background as .os__wallpaper in styles.css */
 export function drawWallpaper(
 	ctx: CanvasRenderingContext2D,
 	w: number,
 	h: number,
 ) {
-	ctx.fillStyle = "#03060f";
+	ctx.fillStyle = "#a9cbf1";
 	ctx.fillRect(0, 0, w, h);
-	// blue band arching across the middle
 	ctx.save();
-	ctx.translate(w / 2, h * 0.5);
-	ctx.scale(1, 0.32);
-	const g = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 0.6);
-	g.addColorStop(0, "rgba(56,110,235,0.75)");
-	g.addColorStop(0.55, "rgba(30,63,216,0.35)");
-	g.addColorStop(1, "rgba(30,63,216,0)");
+	ctx.translate(w / 2, h * 0.45);
+	ctx.scale(1, (0.7 * h) / (0.75 * w));
+	const g = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 0.75);
+	g.addColorStop(0, "#eaf4ff");
+	g.addColorStop(0.55, "#c9e1fb");
+	g.addColorStop(1, "#a9cbf1");
 	ctx.fillStyle = g;
-	ctx.fillRect(-w, -h * 2, w * 2, h * 4);
+	ctx.fillRect(-w, -h * 3, w * 2, h * 6);
 	ctx.restore();
+}
+
+/** Old-CRT look, matching .crt / .screen--crt in styles.css: scanlines, dark edges, rounded tube corners. */
+function drawCrt(ctx: CanvasRenderingContext2D, w: number, h: number) {
+	ctx.fillStyle = "rgba(0,20,60,0.07)";
+	for (let y = 0; y < h; y += 3) ctx.fillRect(0, y, w, 1);
+	ctx.save();
+	ctx.translate(w / 2, h / 2);
+	ctx.scale(1, h / w);
+	const v = ctx.createRadialGradient(0, 0, w * 0.36, 0, 0, w * 0.66);
+	v.addColorStop(0, "rgba(10,30,70,0)");
+	v.addColorStop(1, "rgba(10,30,70,0.4)");
+	ctx.fillStyle = v;
+	ctx.fillRect(-w, -w, w * 2, w * 2);
+	ctx.restore();
+	// black outside the rounded corners (border-radius: 3.2% / 5.5%)
+	const rx = w * 0.032, ry = h * 0.055;
+	ctx.fillStyle = "#000";
+	ctx.beginPath();
+	ctx.rect(0, 0, w, h);
+	ctx.moveTo(rx, 0);
+	ctx.ellipse(rx, ry, rx, ry, 0, -Math.PI / 2, -Math.PI, true);
+	ctx.lineTo(0, h - ry);
+	ctx.ellipse(rx, h - ry, rx, ry, 0, Math.PI, Math.PI / 2, true);
+	ctx.lineTo(w - rx, h);
+	ctx.ellipse(w - rx, h - ry, rx, ry, 0, Math.PI / 2, 0, true);
+	ctx.lineTo(w, ry);
+	ctx.ellipse(w - rx, ry, rx, ry, 0, 0, -Math.PI / 2, true);
+	ctx.closePath();
+	ctx.fill("evenodd");
 }
 
 export class PcScreenTexture {
@@ -58,13 +86,14 @@ export class PcScreenTexture {
 		const ctx = this.canvas.getContext("2d")!;
 		const { width: w, height: h } = this.canvas;
 		drawWallpaper(ctx, w, h);
-		// taskbar
-		ctx.fillStyle = "rgba(16,18,22,0.92)";
-		ctx.fillRect(0, h - 40, w, 40);
-		ctx.fillStyle = "#f2f4f7";
+		// taskbar (48 px, like TASKBAR_H in osStore.ts)
+		ctx.fillStyle = "rgba(238,245,253,0.9)";
+		ctx.fillRect(0, h - 48, w, 48);
+		ctx.fillStyle = "#1b1d21";
 		ctx.font = `400 12px ${UI}`;
 		ctx.textAlign = lang === "ar" ? "left" : "right";
-		ctx.fillText(clock(), lang === "ar" ? 24 : w - 24, h - 16);
+		ctx.fillText(clock(), lang === "ar" ? 24 : w - 24, h - 20);
+		drawCrt(ctx, w, h);
 		this.texture.needsUpdate = true;
 	}
 }

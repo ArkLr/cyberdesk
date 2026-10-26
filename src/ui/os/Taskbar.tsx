@@ -1,6 +1,6 @@
 // Bottom taskbar (Windows 11 style): centered Start, search and apps; system tray and clock at the end.
-import { useEffect, useState } from "react";
-import { useOs, activeWindowId, type AppId } from "./osStore";
+import { useContext, useEffect, useState } from "react";
+import { useOs, activeWindowId, type AppId, DESKTOP_W } from "./osStore";
 import {
 	APP_ICONS,
 	BatteryGlyph,
@@ -11,6 +11,7 @@ import {
 	WifiGlyph,
 } from "./icons";
 import { ArcMark } from "./ArcLogo";
+import { ScaleContext } from "./scale";
 import { useGame } from "../../store/gameStore";
 import { useT } from "../../i18n/strings";
 
@@ -33,6 +34,16 @@ export function Taskbar() {
 	const t = useT();
 	const now = useNow();
 	const active = activeWindowId(windows);
+	const scale = useContext(ScaleContext);
+	// right-click menu (x in desktop pixels)
+	const [menu, setMenu] = useState<number | null>(null);
+
+	useEffect(() => {
+		if (menu === null) return;
+		const close = () => setMenu(null);
+		window.addEventListener("pointerdown", close);
+		return () => window.removeEventListener("pointerdown", close);
+	}, [menu]);
 	const locale = lang === "ar" ? "ar-DZ" : "en-GB";
 
 	// pinned apps first, then any other open app
@@ -42,7 +53,36 @@ export function Taskbar() {
 	];
 
 	return (
-		<footer className="taskbar">
+		<footer
+			className="taskbar"
+			onContextMenu={(e) => {
+				e.preventDefault();
+				const r = e.currentTarget.getBoundingClientRect();
+				setMenu((e.clientX - r.left) / scale);
+			}}
+		>
+			{menu !== null && (
+				<div
+					className="ctx tb__menu"
+					role="menu"
+					style={{ left: Math.min(menu, DESKTOP_W - 230) }}
+					onPointerDown={(e) => e.stopPropagation()}
+				>
+					<button
+						role="menuitem"
+						className="ctx__item"
+						onClick={() => {
+							setMenu(null);
+							useOs.getState().openApp("taskmgr");
+						}}
+					>
+						{t.apps.taskmgr}
+					</button>
+					<button role="menuitem" className="ctx__item" disabled>
+						{t.taskbarSettings}
+					</button>
+				</div>
+			)}
 			<div className="tb__center">
 				<button
 					className={`tb__btn tb__start ${startOpen ? "tb__btn--on" : ""}`}

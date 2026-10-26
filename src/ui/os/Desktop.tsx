@@ -1,6 +1,6 @@
 // The whole computer screen: wallpaper, desktop icons, windows, Start menu,
 // notifications and taskbar. Laid out at DESKTOP_W x DESKTOP_H.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	useOs,
 	activeWindowId,
@@ -15,6 +15,9 @@ import { StartMenu } from "./StartMenu";
 import { MailApp } from "./apps/MailApp";
 import { BrowserApp } from "./apps/BrowserApp";
 import { FilesApp } from "./apps/FilesApp";
+import { WriterApp } from "./apps/WriterApp";
+import { TaskManagerApp } from "./apps/TaskManagerApp";
+import { ScamScreen } from "./pages/TechScam";
 import { useT } from "../../i18n/strings";
 import { Wallpaper } from "./Wallpaper";
 import { Consequence } from "./Consequence";
@@ -31,6 +34,10 @@ function AppContent({ app }: { app: AppId }) {
 			return <FilesApp />;
 		case "bin":
 			return <FilesApp mode="bin" />;
+		case "writer":
+			return <WriterApp />;
+		case "taskmgr":
+			return <TaskManagerApp />;
 	}
 }
 
@@ -66,6 +73,15 @@ export function Desktop() {
 	const [selected, setSelected] = useState<AppId | null>(null);
 	const t = useT();
 	const active = activeWindowId(windows);
+
+	// Ctrl+Shift+Esc opens Task Manager, like on Windows
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			if (e.ctrlKey && e.shiftKey && e.key === "Escape") openApp("taskmgr");
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, [openApp]);
 
 	return (
 		<div
@@ -109,6 +125,7 @@ export function Desktop() {
 				</Window>
 			))}
 
+			<ScamScreen />
 			<StartMenu />
 			<Notifications />
 			<Consequence />

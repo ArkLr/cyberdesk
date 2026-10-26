@@ -5,6 +5,8 @@ import { useGame } from "../store/gameStore";
 import { useT } from "../i18n/strings";
 import { useToast, Toast } from "./Toast";
 import { usePhone } from "./phoneStore";
+import { CallScreen } from "./CallScreen";
+import { BANK_NUMBER, placeCall } from "../game/events";
 import {
   BackGlyph, BatteryGlyph, BluetoothGlyph, ChevronRightGlyph, InfoGlyph, BellGlyph,
   PhoneGlyph, ShieldGlyph, WifiGlyph, SearchGlyph, PencilGlyph,
@@ -55,13 +57,39 @@ function StatusBar({ time }: { time: string }) {
   );
 }
 
+/** People saved on the phone. ArcBank's number is the one printed on the bank card. */
+const CONTACTS = [
+  { name: "ArcBank", number: BANK_NUMBER, card: true },
+  { name: "David", number: "0555 12 34 56" },
+  { name: "Sara", number: "0661 98 76 54" },
+];
+
 function AppScreen({ app, onBack }: { app: PhoneApp; onBack: () => void }) {
   const t = useT();
+  const sms = usePhone((s) => s.sms);
   const [number, setNumber] = useState("");
+  const [tab, setTab] = useState<"keypad" | "contacts">("keypad");
   const title = t.phoneApps[app];
 
   let body: JSX.Element;
-  if (app === "messages") {
+  if (app === "messages" && sms.length) {
+    body = (
+      <div className="ph__list">
+        {sms.map((m) => (
+          <div key={m.id} className="ph__sms">
+            <span className="ph__sms-avatar" aria-hidden="true">{m.from[0]}</span>
+            <span className="ph__sms-text">
+              <span className="ph__sms-top">
+                <strong>{m.from}</strong>
+                <small>{new Date(m.time).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</small>
+              </span>
+              <span>{t.sms[m.key as keyof typeof t.sms]}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  } else if (app === "messages") {
     body = (
       <div className="ph__empty">
         <span className="ph__empty-icon ph__icon--messages"><AppGlyph app="messages" /></span>
@@ -93,6 +121,22 @@ function AppScreen({ app, onBack }: { app: PhoneApp; onBack: () => void }) {
         })}
       </div>
     );
+  } else if (tab === "contacts") {
+    body = (
+      <div className="ph__list">
+        {CONTACTS.map((c) => (
+          <button key={c.name} className="ph__row ph__contact" onClick={() => placeCall(c.number)}>
+            <span className="ph__sms-avatar" aria-hidden="true">{c.name[0]}</span>
+            <span className="ph__sms-text">
+              <strong>{c.name}</strong>
+              <small dir="ltr">{c.number}</small>
+              {c.card && <small>{t.contacts.card}</small>}
+            </span>
+            <PhoneGlyph size={16} className="ph__row-chev" />
+          </button>
+        ))}
+      </div>
+    );
   } else {
     // dial pad
     const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"];
@@ -106,7 +150,7 @@ function AppScreen({ app, onBack }: { app: PhoneApp; onBack: () => void }) {
         </div>
         <div className="ph__dial-row">
           <span />
-          <button className="ph__call" aria-label={t.call}><PhoneGlyph size={22} /></button>
+          <button className="ph__call" aria-label={t.call} onClick={() => placeCall(number)}><PhoneGlyph size={22} /></button>
           <button className="ph__del" onClick={() => setNumber((n) => n.slice(0, -1))} aria-label="Delete">⌫</button>
         </div>
       </div>
@@ -123,6 +167,12 @@ function AppScreen({ app, onBack }: { app: PhoneApp; onBack: () => void }) {
         )}
       </header>
       {body}
+      {app === "phone" && (
+        <nav className="ph__tabs">
+          <button className={tab === "keypad" ? "on" : ""} onClick={() => setTab("keypad")}>{t.contacts.keypad}</button>
+          <button className={tab === "contacts" ? "on" : ""} onClick={() => setTab("contacts")}>{t.contacts.title}</button>
+        </nav>
+      )}
     </div>
   );
 }
@@ -188,6 +238,7 @@ export function PhoneScreen() {
             <div className="ph__dock">{DOCK.map((a) => icon(a, false))}</div>
           </div>
         )}
+        <CallScreen />
         <Notice />
         <Toast text={toast} />
         <button className="ph__homebar" onClick={() => setApp(null)} aria-label="Home" />

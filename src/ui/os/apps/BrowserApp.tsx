@@ -6,7 +6,10 @@ import { useOs } from "../osStore";
 import { ArcLogo } from "../ArcLogo";
 import { CrackSite } from "../pages/CrackSite";
 import { BankSite, PhishSite } from "../pages/BankSite";
-import { BANK_URL, CRACK_FILE, CRACK_URL, PHISH_URL, fileAction, visitUrl } from "../../../game/events";
+import { NewsSite } from "../pages/NewsSite";
+import { BrowserSettings } from "../pages/BrowserSettings";
+import { TechScam } from "../pages/TechScam";
+import { ABOUT_URL, BANK_URL, CRACK_URL, NEWS_URL, PHISH_URL, SCAM_URL, fileAction, visitUrl } from "../../../game/events";
 import { useT } from "../../../i18n/strings";
 
 /** The fake websites, by address. `secure: false` shows "Not secure" in the address bar. */
@@ -14,6 +17,9 @@ const PAGES: Record<string, { title: string; secure: boolean; Page: () => JSX.El
   [CRACK_URL]: { title: "FREE GAMEZ - Download Full Cracked Games", secure: false, Page: CrackSite },
   [BANK_URL]: { title: "ArcBank - Online Banking", secure: true, Page: BankSite },
   [PHISH_URL]: { title: "ArcBank - Account verification", secure: false, Page: PhishSite },
+  [NEWS_URL]: { title: "The Daily Nova - News", secure: true, Page: NewsSite },
+  [SCAM_URL]: { title: "⚠ Security Alert", secure: false, Page: () => <TechScam /> },
+  [ABOUT_URL]: { title: "", secure: true, Page: BrowserSettings }, // title from strings
 };
 
 const QUICK = [
@@ -29,10 +35,11 @@ export function BrowserApp() {
   const t = useT();
   const url = useOs((s) => s.browserUrl);
   const [address, setAddress] = useState(url ?? "");
+  const [menu, setMenu] = useState(false);
   const { notify, openFolder } = useOs.getState();
   const page = url ? PAGES[url] : undefined;
-  // the downloads bar: the cracked game, while it's still on the disk
-  const download = useOs((s) => s.files.find((f) => f.id === CRACK_FILE.id && !f.deleted));
+  // the downloads bar: the last download, while it's still on the disk
+  const download = useOs((s) => s.files.find((f) => f.id === s.lastDownload && !f.deleted));
 
   useEffect(() => setAddress(url ?? ""), [url]);
 
@@ -44,11 +51,11 @@ export function BrowserApp() {
   };
 
   return (
-    <div className="browser">
+    <div className="browser" onClick={() => setMenu(false)}>
       <div className="browser__tabs">
         <div className="browser__tab browser__tab--on">
           <BrowserIcon size={16} />
-          <span dir="auto">{page ? page.title : t.newTab}</span>
+          <span dir="auto">{url === ABOUT_URL ? t.aboutPage.title : page ? page.title : t.newTab}</span>
           <button className="browser__tab-x" onClick={() => visitUrl(null)} aria-label={t.closeTab} title={t.closeTab}><CloseGlyph /></button>
         </div>
         <button className="browser__newtab" aria-label={t.newTab}><PlusGlyph size={14} /></button>
@@ -67,7 +74,28 @@ export function BrowserApp() {
           <StarGlyph size={14} />
         </label>
         <span className="browser__profile" aria-hidden="true"><UserGlyph size={14} /></span>
-        <button type="button" className="browser__nav" aria-label="Menu"><MoreGlyph /></button>
+        <span className="browser__menu-wrap">
+          <button
+            type="button"
+            className="browser__nav"
+            aria-label={t.browserMenu.label}
+            title={t.browserMenu.label}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenu((m) => !m);
+            }}
+          >
+            <MoreGlyph />
+          </button>
+          {menu && (
+            <div className="ctx browser__menu" role="menu">
+              <button type="button" role="menuitem" className="ctx__item" onClick={() => visitUrl(null)}>{t.browserMenu.newTab}</button>
+              <button type="button" role="menuitem" className="ctx__item" onClick={() => openFolder("downloads")}>{t.browserMenu.downloads}</button>
+              <button type="button" role="menuitem" className="ctx__item" onClick={() => visitUrl(ABOUT_URL)}>{t.browserMenu.settings}</button>
+              <button type="button" role="menuitem" className="ctx__item" onClick={() => visitUrl(ABOUT_URL)}>{t.browserMenu.about}</button>
+            </div>
+          )}
+        </span>
       </form>
       {page ? (
         <div className="browser__page"><page.Page /></div>

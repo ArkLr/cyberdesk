@@ -6,6 +6,8 @@ import { APP_ICONS, CloseGlyph, MaxGlyph, MinGlyph, RestoreGlyph } from "./icons
 import { ScaleContext } from "./scale";
 import { useT } from "../../i18n/strings";
 
+const TASKMGR_Z = 8995;
+
 export function Window({ win, active, children }: { win: Win; active: boolean; children: ReactNode }) {
   const { focus, close, minimize, toggleMaximize, move } = useOs.getState();
   const scale = useContext(ScaleContext);
@@ -32,6 +34,8 @@ export function Window({ win, active, children }: { win: Win; active: boolean; c
   const style = win.maximized
     ? { left: 0, top: 0, width: DESKTOP_W, height: DESKTOP_H - TASKBAR_H, zIndex: win.z }
     : { left: win.x, top: win.y, width: win.w, height: win.h, zIndex: win.z };
+  // Task Manager stays on top, even above a full-screen page
+  if (win.app === "taskmgr") style.zIndex = TASKMGR_Z;
 
   return (
     <section

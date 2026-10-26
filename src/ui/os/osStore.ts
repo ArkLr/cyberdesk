@@ -2,7 +2,7 @@
 // the Start menu, and the notification toasts.
 import { create } from "zustand";
 
-export type AppId = "mail" | "browser" | "files" | "bin";
+export type AppId = "mail" | "browser" | "files" | "bin" | "writer" | "taskmgr";
 
 export interface Win {
   id: string;
@@ -64,6 +64,8 @@ const DEFAULT_SIZE: Record<AppId, { w: number; h: number }> = {
   browser: { w: 1040, h: 620 },
   files: { w: 940, h: 600 },
   bin: { w: 820, h: 500 },
+  writer: { w: 900, h: 640 },
+  taskmgr: { w: 520, h: 420 },
 };
 
 interface OsState {
@@ -81,6 +83,10 @@ interface OsState {
   showExt: boolean;
   /** the webcam light next to the screen */
   webcamOn: boolean;
+  /** the file in the browser's downloads bar */
+  lastDownload: string | null;
+  /** the document open in Writer (an attachment's name) */
+  doc: string | null;
 
   openApp: (app: AppId) => void;
   close: (id: string) => void;
@@ -107,6 +113,7 @@ interface OsState {
   markRead: (id: string) => void;
   setShowExt: (on: boolean) => void;
   setWebcam: (on: boolean) => void;
+  openDoc: (name: string) => void;
 }
 
 let noteId = 0;
@@ -122,6 +129,8 @@ export const useOs = create<OsState>((set, get) => ({
   mails: [{ id: "welcome", key: "welcome", from: "Arc Mail", address: "team@arcmail.example", folder: "inbox", time: Date.now() - 86_400_000, read: true }],
   showExt: false,
   webcamOn: false,
+  lastDownload: null,
+  doc: null,
 
   openApp: (app) => {
     const existing = get().windows.find((w) => w.app === app);
@@ -195,6 +204,10 @@ export const useOs = create<OsState>((set, get) => ({
   markRead: (id) => set({ mails: get().mails.map((m) => (m.id === id ? { ...m, read: true } : m)) }),
   setShowExt: (showExt) => set({ showExt }),
   setWebcam: (webcamOn) => set({ webcamOn }),
+  openDoc: (doc) => {
+    set({ doc });
+    get().openApp("writer");
+  },
 }));
 
 /** Windows hides the last extension unless "File name extensions" is on: IMG_2041.jpg.exe -> IMG_2041.jpg */

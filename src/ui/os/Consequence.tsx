@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useFlow } from "../../game/flow";
 import { BANK_URL, CRACK_FILE, PHOTO_MAIL, stealMoney } from "../../game/events";
+import type { Mail } from "./osStore";
 import { useOs } from "./osStore";
 import { SecurityIcon } from "./icons";
 import { useT } from "../../i18n/strings";
@@ -173,11 +174,136 @@ function BankFine() {
   );
 }
 
-function Pause() {
+const AD_COUNT = 14;
+const AD_DELAYS = [700, ...Array.from({ length: AD_COUNT }, (_, i) => Math.max(120, 420 - i * 30)), 900];
+
+/** Event 4, ran Update.exe: ad pop-ups open faster and faster all over the screen. */
+function Adware() {
+  const t = useT();
+  const stage = useStages(AD_DELAYS);
+  const shown = Math.min(Math.max(stage - 1, 0), AD_COUNT);
+  return (
+    <div className="cons">
+      {Array.from({ length: shown }, (_, i) => {
+        const ad = t.cons.ads[i % t.cons.ads.length];
+        // spread over the desktop without randomness, so it looks the same every time
+        const left = 40 + ((i * 389) % 1080);
+        const top = 30 + ((i * 211) % 520);
+        return (
+          <div key={i} className={`cons__ad cons__ad--${i % 4}`} style={{ left, top }}>
+            <header>
+              <span>{t.cons.adTitle}</span>
+              <b aria-hidden="true">×</b>
+            </header>
+            <strong>{ad}</strong>
+            <button tabIndex={-1}>{t.cons.adBtn}</button>
+          </div>
+        );
+      })}
+      {stage > AD_COUNT + 1 && (
+        <div className="cons__alert cons__alert--bad" role="alertdialog">
+          <strong>{t.cons.adwareTitle}</strong>
+          <p>{t.cons.adware}</p>
+          <button onClick={() => useFlow.getState().consequenceDone()}>{t.cons.continue}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const LOCK_FILES = [
+  "CV_2026.docx", "Family_trip_2025.jpg", "Thesis_final_v3.docx", "Bank_statements.pdf", "Wedding_video.mp4",
+  "Budget_2026.xlsx", "IMG_0412.jpg", "IMG_0413.jpg", "Passport_scan.pdf", "Notes.txt",
+];
+// flicker, then one file every 350 ms, the new wallpaper, then the ransom note
+const RANSOM_DELAYS = [1400, ...LOCK_FILES.map(() => 350), 1200, 1600];
+const RANSOM_SECONDS = 72 * 3600;
+
+/** Event 5, enabled the macros: files get encrypted one by one, the wallpaper changes, then the ransom note. */
+function Ransomware() {
+  const t = useT();
+  const stage = useStages(RANSOM_DELAYS);
+  const locked = Math.min(Math.max(stage - 1, 0), LOCK_FILES.length);
+  const wallpaper = stage > LOCK_FILES.length + 1;
+  const note = stage > LOCK_FILES.length + 2;
+  const [left, setLeft] = useState(RANSOM_SECONDS);
+
   useEffect(() => {
-    const id = setTimeout(() => useFlow.getState().consequenceDone(), 1200);
-    return () => clearTimeout(id);
+    // the document window goes away as soon as the macro runs
+    if (stage !== 1) return;
+    const os = useOs.getState();
+    os.windows.filter((w) => w.app === "writer").forEach((w) => os.close(w.id));
+  }, [stage]);
+  useEffect(() => {
+    if (!note) return;
+    const id = setInterval(() => setLeft((l) => Math.max(l - 1, 0)), 1000);
+    return () => clearInterval(id);
+  }, [note]);
+
+  const clock = [Math.floor(left / 3600), Math.floor(left / 60) % 60, left % 60].map((n) => String(n).padStart(2, "0")).join(":");
+
+  return (
+    <div className="cons">
+      {stage === 0 && <div className="cons__flicker" />}
+      {stage > 0 && !wallpaper && (
+        <div className="cons__locker" dir="ltr">
+          <header>C:\Users\Arc\Documents</header>
+          {LOCK_FILES.map((f, i) => (
+            <p key={f} className={i < locked ? "cons__locked" : ""}>
+              <span aria-hidden="true">{i < locked ? "🔒" : "📄"}</span> {i < locked ? `${f}.locked` : f}
+            </p>
+          ))}
+        </div>
+      )}
+      {wallpaper && (
+        <div className="cons__ransom-bg">
+          <span>{t.cons.ransomBg}</span>
+        </div>
+      )}
+      {note && (
+        <div className="cons__ransom" role="alertdialog">
+          <h2>🔒 {t.cons.ransomTitle}</h2>
+          <p>{t.cons.ransomBody}</p>
+          <p>{t.cons.ransomPay}</p>
+          <code dir="ltr">bc1q-demo-not-a-real-wallet-7731</code>
+          <div className="cons__ransom-timer">
+            <span>{t.cons.ransomTimer}</span>
+            <b dir="ltr">{clock}</b>
+          </div>
+          <button className="cons__ransom-pay" tabIndex={-1}>{t.cons.ransomCheck}</button>
+          <button className="cons__ransom-go" onClick={() => useFlow.getState().consequenceDone()}>{t.cons.continue}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Event 5, forwarded the invoice: the friend opens it, and it gets them instead. */
+function FriendReplies() {
+  const t = useT();
+  useEffect(() => {
+    const ids = [
+      setTimeout(() => {
+        const os = useOs.getState();
+        const to = os.mails.find((m) => m.id === "fw-invoice-mail")?.address ?? "friend@arcmail.example";
+        const name = to.split("@")[0].replace(/^./, (c) => c.toUpperCase());
+        const reply: Mail = { id: "friend-reply", key: "friendLocked", from: name, address: to, folder: "inbox", time: Date.now(), read: false };
+        os.addMail(reply);
+        os.notify(name, t.mails.friendLocked.body);
+      }, 2000),
+      setTimeout(() => useFlow.getState().consequenceDone(), 6000),
+    ];
+    return () => ids.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  return null;
+}
+
+function Pause({ ms = 1200 }: { ms?: number }) {
+  useEffect(() => {
+    const id = setTimeout(() => useFlow.getState().consequenceDone(), ms);
+    return () => clearTimeout(id);
+  }, [ms]);
   return null;
 }
 
@@ -198,6 +324,21 @@ export function Consequence() {
       return <PhishLogin />;
     case "phish:official":
       return <BankFine />;
+    case "update:install":
+      return <Adware />;
+    case "update:settings":
+      // let the About page finish checking ("up to date")
+      return <Pause ms={3500} />;
+    case "invoice:enable":
+      return <Ransomware />;
+    case "invoice:forward":
+      return <FriendReplies />;
+    // these play out on the phone (call scripts in events.ts move the game on)
+    case "scam:call":
+    case "vishing:read":
+    case "vishing:askName":
+    case "vishing:hangup":
+      return null;
     default:
       return <Pause />;
   }

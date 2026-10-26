@@ -3,20 +3,26 @@
 import { useState } from "react";
 import {
   ArchiveGlyph, CloseGlyph, DocGlyph, ExeIcon, FilterGlyph, FlagGlyph, InboxGlyph, JunkGlyph, MailIcon, MenuGlyph,
-  PencilGlyph, PhotosIcon, ReplyGlyph, SearchGlyph, SendGlyph, TrashGlyph,
+  MailForwardGlyph, PencilGlyph, PhotosIcon, ReplyGlyph, SearchGlyph, SendGlyph, TrashGlyph, WriterIcon,
 } from "../icons";
 import { useOs, shownName, type Mail, type MailFolder } from "../osStore";
 import { mailAction, type MailAction } from "../../../game/events";
 import { useGame } from "../../../store/gameStore";
 import { useT, type Strings } from "../../../i18n/strings";
 
-/** Subject and body of a message, in the current language. Sent replies are "re-<key>". */
+/** Subject and body of a message, in the current language. Sent replies are "re-<key>", forwards "fw-<key>". */
 function mailText(t: Strings, m: Mail) {
-  if (m.key.startsWith("re-")) {
-    const orig = t.mails[m.key.slice(3) as keyof Strings["mails"]];
-    return { subject: t.re + orig.subject, body: t.replyBody };
-  }
+  const orig = t.mails[m.key.slice(3) as keyof Strings["mails"]];
+  if (m.key.startsWith("re-")) return { subject: t.re + orig.subject, body: t.replyBody };
+  if (m.key.startsWith("fw-")) return { subject: t.fw + orig.subject, body: `${t.forwardBody}\n\n${orig.body}` };
   return t.mails[m.key as keyof Strings["mails"]];
+}
+
+/** What an attachment really is, from its last extension (the Properties dialog shows this). */
+function attKind(t: Strings, name: string) {
+  return name.endsWith(".docm")
+    ? { Icon: WriterIcon, Big: WriterIcon, type: t.propDocm, opens: t.propMacros }
+    : { Icon: PhotosIcon, Big: ExeIcon, type: t.propApp, opens: t.propItself };
 }
 
 function Avatar({ name }: { name: string }) {
@@ -34,7 +40,7 @@ export function MailApp() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [attMenu, setAttMenu] = useState(false);
   const [props, setProps] = useState(false);
-  const [replying, setReplying] = useState(false);
+  const [replying, setReplying] = useState<"reply" | "forward" | null>(null);
   /** the link under the mouse, shown at the bottom like a real mail app does */
   const [hover, setHover] = useState<string | null>(null);
 
@@ -62,16 +68,16 @@ export function MailApp() {
     setOpenId(m.id);
     setAttMenu(false);
     setProps(false);
-    setReplying(false);
+    setReplying(null);
     setHover(null);
     markRead(m.id);
   };
-  const act = (m: Mail, action: MailAction) => {
+  const act = (m: Mail, action: MailAction, to?: string) => {
     setAttMenu(false);
-    setReplying(false);
+    setReplying(null);
     setHover(null);
     if (action === "delete") setOpenId(null);
-    mailAction(m, action);
+    mailAction(m, action, to);
   };
 
   return (
@@ -131,7 +137,7 @@ export function MailApp() {
                     </span>
                     <span className="mail__item-subject">{text.subject}</span>
                     <span className="mail__item-preview">{text.body.split("\n").find((l) => l.trim() && l.length > 12)}</span>
-                    {m.attachment && <span className="mail__item-att"><PhotosIcon size={14} /> <span dir="ltr">{shownName(m.attachment.name, showExt)}</span></span>}
+                    {m.attachment && <span className="mail__item-att">{(() => { const { Icon } = attKind(t, m.attachment.name); return <Icon size={14} />; })()} <span dir="ltr">{shownName(m.attachment.name, showExt)}</span></span>}
                   </span>
                 </button>
               );
@@ -148,7 +154,8 @@ export function MailApp() {
 
       <section className="mail__read">
         <div className="mail__toolbar">
-          <button disabled={!open || folder === "sent"} onClick={() => setReplying(true)} title={t.reply} aria-label={t.reply}><ReplyGlyph /> {t.reply}</button>
+          <button disabled={!open || folder === "sent"} onClick={() => setReplying("reply")} title={t.reply} aria-label={t.reply}><ReplyGlyph /> {t.reply}</button>
+          <button disabled={!open || folder === "sent"} onClick={() => setReplying("forward")} title={t.forward} aria-label={t.forward}><MailForwardGlyph /> {t.forward}</button>
           <button disabled={!open} onClick={() => open && act(open, "delete")} title={t.cmd.delete} aria-label={t.cmd.delete}><TrashGlyph /> {t.cmd.delete}</button>
           <span aria-hidden="true"><ArchiveGlyph /></span>
           <span aria-hidden="true"><FlagGlyph /></span>
@@ -174,7 +181,7 @@ export function MailApp() {
                   }}
                   onDoubleClick={() => act(open, "openAttachment")}
                 >
-                  <PhotosIcon size={32} />
+                  {(() => { const { Icon } = attKind(t, open.attachment.name); return <Icon size={32} />; })()}
                   <span>
                     <strong dir="ltr">{shownName(open.attachment.name, showExt)}</strong>
                     <small>{open.attachment.size}</small>
@@ -214,7 +221,15 @@ export function MailApp() {
               )}
             </div>
 
-            {replying && <Reply mail={open} onSend={() => act(open, "reply")} onDiscard={() => setReplying(false)} />}
+            {replying && (
+              <Compose
+                key={replying}
+                mail={open}
+                forward={replying === "forward"}
+                onSend={(to) => act(open, replying, to)}
+                onDiscard={() => setReplying(null)}
+              />
+            )}
           </article>
         ) : (
           <div className="mail__read-empty">
@@ -233,14 +248,14 @@ export function MailApp() {
               <button onClick={() => setProps(false)} aria-label={t.close}><CloseGlyph /></button>
             </header>
             <div className="props__name">
-              <ExeIcon size={40} />
+              {(() => { const { Big } = attKind(t, open.attachment.name); return <Big size={40} />; })()}
               <strong dir="ltr">{open.attachment.name}</strong>
             </div>
             <dl>
               <dt>{t.propType}</dt>
-              <dd className="props__warn">{t.propApp}</dd>
+              <dd className="props__warn">{attKind(t, open.attachment.name).type}</dd>
               <dt>{t.propOpensWith}</dt>
-              <dd>{t.propItself}</dd>
+              <dd>{attKind(t, open.attachment.name).opens}</dd>
               <dt>{t.propSize}</dt>
               <dd>{open.attachment.size}</dd>
             </dl>
@@ -252,15 +267,25 @@ export function MailApp() {
   );
 }
 
-function Reply({ mail, onSend, onDiscard }: { mail: Mail; onSend: () => void; onDiscard: () => void }) {
+/** Reply (to the sender) or forward (to an address the player types). */
+function Compose({ mail, forward, onSend, onDiscard }: { mail: Mail; forward: boolean; onSend: (to: string) => void; onDiscard: () => void }) {
   const t = useT();
-  const [text, setText] = useState(t.replyBody);
+  const [text, setText] = useState(forward ? t.forwardBody : t.replyBody);
+  const [to, setTo] = useState("");
+  const ready = !forward || /\S+@\S+\.\S+/.test(to);
   return (
     <div className="mail__reply">
-      <div className="mail__reply-to">{t.to}: <span dir="ltr">{mail.address}</span></div>
-      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} aria-label={t.reply} />
+      <div className="mail__reply-to">
+        {t.to}:{" "}
+        {forward ? (
+          <input className="mail__to" value={to} onChange={(e) => setTo(e.target.value)} placeholder={t.forwardTo} aria-label={t.to} dir="ltr" autoFocus />
+        ) : (
+          <span dir="ltr">{mail.address}</span>
+        )}
+      </div>
+      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} aria-label={forward ? t.forward : t.reply} />
       <div className="mail__reply-actions">
-        <button className="mail__send" onClick={onSend}><SendGlyph /> {t.send}</button>
+        <button className="mail__send" disabled={!ready} onClick={() => onSend(to.trim())}><SendGlyph /> {t.send}</button>
         <button className="mail__discard" onClick={onDiscard}>{t.discard}</button>
       </div>
     </div>

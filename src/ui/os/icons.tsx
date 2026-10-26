@@ -103,6 +103,26 @@ export const ExeIcon = (p: P) => (
   </svg>
 );
 
+/** Writer, the word processor: a page with a blue band and text lines. */
+export const WriterIcon = (p: P) => (
+  <svg {...app(p)}>
+    <path d="M12 5h18l8 8v30H12z" fill="#fff" stroke="#8d98a5" />
+    <path d="M30 5v8h8" fill="#e3e8ee" stroke="#8d98a5" />
+    <rect x="6" y="17" width="20" height="18" rx="2" fill="#2b5fb4" />
+    <path d="m10 22 2.2 9 2.8-7 2.8 7 2.2-9" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinejoin="round" />
+    <path d="M29 22h5M29 27h5M29 32h5M16 39h18" stroke="#9aa6b4" strokeWidth="1.6" />
+  </svg>
+);
+
+/** Task Manager: a window with a green activity graph. */
+export const TaskMgrIcon = (p: P) => (
+  <svg {...app(p)}>
+    <rect x="5" y="8" width="38" height="32" rx="2.5" fill="#fff" stroke="#8d98a5" />
+    <path d="M5 10.5A2.5 2.5 0 0 1 7.5 8h33a2.5 2.5 0 0 1 2.5 2.5V14H5z" fill="#4a5568" />
+    <path d="M9 33h4l3-9 4 13 4-17 3 9 3-4 3 8h6" fill="none" stroke="#17a34a" strokeWidth="2.2" strokeLinejoin="round" />
+  </svg>
+);
+
 
 /* ---------------- UI glyphs ---------------- */
 
@@ -168,6 +188,7 @@ export const FilterGlyph = (p: P) => <svg {...ui(p)}><path d="M2 3.5h12M4.5 8h7M
 export const FlagGlyph = (p: P) => <svg {...ui(p)}><path d="M3.5 14V2.5M3.5 3h8l-1.8 3 1.8 3h-8" /></svg>;
 export const ArchiveGlyph = (p: P) => <svg {...ui(p)}><rect x="1.8" y="2.5" width="12.4" height="3" rx=".8" /><path d="M2.8 5.5v7a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1v-7M6.3 8.5h3.4" /></svg>;
 export const ReplyGlyph = (p: P) => <svg {...ui(p)}><path d="M6.5 3.5 2.5 7.5l4 4M2.5 7.5h7a4 4 0 0 1 4 4v1" /></svg>;
+export const MailForwardGlyph = (p: P) => <svg {...ui(p)}><path d="m9.5 3.5 4 4-4 4M13.5 7.5h-7a4 4 0 0 0-4 4v1" /></svg>;
 
 // Window caption buttons (thin, like the Windows title bar)
 export const MinGlyph = () => <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5.5h10" stroke="currentColor" /></svg>;
@@ -178,9 +199,11 @@ export const RestoreGlyph = () => (
 export const CloseGlyph = () => <svg width="10" height="10" viewBox="0 0 10 10"><path d="m.5.5 9 9m0-9-9 9" stroke="currentColor" /></svg>;
 
 /** App id -> icon, used by the desktop, taskbar and Start menu. */
-export const APP_ICONS: Record<"mail" | "browser" | "files" | "bin", IconComponent> = {
+export const APP_ICONS: Record<"mail" | "browser" | "files" | "bin" | "writer" | "taskmgr", IconComponent> = {
   mail: MailIcon,
   browser: BrowserIcon,
   files: ExplorerIcon,
   bin: BinIcon,
+  writer: WriterIcon,
+  taskmgr: TaskMgrIcon,
 };

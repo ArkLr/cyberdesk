@@ -6,7 +6,7 @@ import {
   PencilGlyph, PhotosIcon, ReplyGlyph, SearchGlyph, SendGlyph, TrashGlyph,
 } from "../icons";
 import { useOs, shownName, type Mail, type MailFolder } from "../osStore";
-import { mailAction } from "../../../game/events";
+import { mailAction, type MailAction } from "../../../game/events";
 import { useGame } from "../../../store/gameStore";
 import { useT, type Strings } from "../../../i18n/strings";
 
@@ -35,6 +35,8 @@ export function MailApp() {
   const [attMenu, setAttMenu] = useState(false);
   const [props, setProps] = useState(false);
   const [replying, setReplying] = useState(false);
+  /** the link under the mouse, shown at the bottom like a real mail app does */
+  const [hover, setHover] = useState<string | null>(null);
 
   const folders = [
     { id: "inbox" as const, label: t.inbox, Icon: InboxGlyph },
@@ -61,11 +63,13 @@ export function MailApp() {
     setAttMenu(false);
     setProps(false);
     setReplying(false);
+    setHover(null);
     markRead(m.id);
   };
-  const act = (m: Mail, action: "openAttachment" | "reply" | "delete") => {
+  const act = (m: Mail, action: MailAction) => {
     setAttMenu(false);
     setReplying(false);
+    setHover(null);
     if (action === "delete") setOpenId(null);
     mailAction(m, action);
   };
@@ -186,7 +190,28 @@ export function MailApp() {
             )}
 
             <div className="mail__body">
-              {mailText(t, open).body.split("\n").map((line, i) => (line ? <p key={i}>{line}</p> : <br key={i} />))}
+              {mailText(t, open).body.split("\n").map((line, i) =>
+                line === "{link}" && open.link ? (
+                  <p key={i}>
+                    <a
+                      className="mail__link"
+                      href={`http://${open.link}`}
+                      onMouseEnter={() => setHover(`http://${open.link}?ref=acc-88213`)}
+                      onMouseLeave={() => setHover(null)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        act(open, "openLink");
+                      }}
+                    >
+                      {t.bankLink}
+                    </a>
+                  </p>
+                ) : line ? (
+                  <p key={i}>{line}</p>
+                ) : (
+                  <br key={i} />
+                ),
+              )}
             </div>
 
             {replying && <Reply mail={open} onSend={() => act(open, "reply")} onDiscard={() => setReplying(false)} />}
@@ -198,6 +223,8 @@ export function MailApp() {
             <span>{t.readingEmptySub}</span>
           </div>
         )}
+
+        {hover && <div className="mail__status"><span dir="ltr">{hover}</span></div>}
 
         {props && open?.attachment && (
           <div className="props" role="dialog" aria-label={t.props(open.attachment.name)}>

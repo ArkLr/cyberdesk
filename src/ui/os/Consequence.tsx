@@ -2,7 +2,7 @@
 // Picked by "<event>:<choice>"; choices without an animation just pause for a moment.
 import { useEffect, useState } from "react";
 import { useFlow } from "../../game/flow";
-import { CRACK_FILE, PHOTO_MAIL } from "../../game/events";
+import { BANK_URL, CRACK_FILE, PHOTO_MAIL, stealMoney } from "../../game/events";
 import { useOs } from "./osStore";
 import { SecurityIcon } from "./icons";
 import { useT } from "../../i18n/strings";
@@ -130,6 +130,49 @@ function ScammerReplies() {
   return null;
 }
 
+const PHISH_DELAYS = [1800, 1800];
+
+/**
+ * Event 3, logged in on the look-alike page: it "verifies" the account and sends the player
+ * to the real bank site, so nothing seems wrong... until the phone buzzes (stealMoney).
+ */
+function PhishLogin() {
+  const t = useT();
+  const stage = useStages(PHISH_DELAYS);
+  useEffect(() => {
+    if (stage !== 2) return;
+    useOs.getState().openUrl(BANK_URL);
+    stealMoney();
+  }, [stage]);
+  if (stage === 2) return null;
+  return (
+    <div className="cons cons--dim">
+      <div className="cons__opening">
+        {stage === 0 ? <span className="cons__spinner" /> : <span className="cons__ok">✓</span>}
+        <span>{stage === 0 ? t.cons.verifying : t.cons.verified}</span>
+      </div>
+    </div>
+  );
+}
+
+const FINE_DELAYS = [1500];
+
+/** Event 3, went to the real site: no suspension there, the email was fake. */
+function BankFine() {
+  const t = useT();
+  const stage = useStages(FINE_DELAYS);
+  if (stage === 0) return null;
+  return (
+    <div className="cons">
+      <div className="cons__alert cons__alert--good" role="alertdialog">
+        <strong>{t.cons.bankFineTitle}</strong>
+        <p>{t.cons.bankFine}</p>
+        <button onClick={() => useFlow.getState().consequenceDone()}>{t.cons.continue}</button>
+      </div>
+    </div>
+  );
+}
+
 function Pause() {
   useEffect(() => {
     const id = setTimeout(() => useFlow.getState().consequenceDone(), 1200);
@@ -151,6 +194,10 @@ export function Consequence() {
       return <WebcamOn />;
     case "photo:reply":
       return <ScammerReplies />;
+    case "phish:login":
+      return <PhishLogin />;
+    case "phish:official":
+      return <BankFine />;
     default:
       return <Pause />;
   }

@@ -5,28 +5,31 @@ import { BackGlyph, ForwardGlyph, LockGlyph, MoreGlyph, PlusGlyph, ReloadGlyph, 
 import { useOs } from "../osStore";
 import { ArcLogo } from "../ArcLogo";
 import { CrackSite } from "../pages/CrackSite";
-import { CRACK_FILE, CRACK_URL, fileAction } from "../../../game/events";
+import { BankSite, PhishSite } from "../pages/BankSite";
+import { BANK_URL, CRACK_FILE, CRACK_URL, PHISH_URL, fileAction, visitUrl } from "../../../game/events";
 import { useT } from "../../../i18n/strings";
 
 /** The fake websites, by address. `secure: false` shows "Not secure" in the address bar. */
 const PAGES: Record<string, { title: string; secure: boolean; Page: () => JSX.Element }> = {
   [CRACK_URL]: { title: "FREE GAMEZ - Download Full Cracked Games", secure: false, Page: CrackSite },
+  [BANK_URL]: { title: "ArcBank - Online Banking", secure: true, Page: BankSite },
+  [PHISH_URL]: { title: "ArcBank - Account verification", secure: false, Page: PhishSite },
 };
 
 const QUICK = [
+  { key: "bank", color: "#0b5e4a", letter: "A" },
   { key: "news", color: "#d64541", letter: "N" },
   { key: "weather", color: "#2e86de", letter: "W" },
   { key: "mail", color: "#1d6fd8", letter: "M" },
   { key: "maps", color: "#1e9e5a", letter: "M" },
   { key: "shop", color: "#e67e22", letter: "S" },
-  { key: "video", color: "#8e44ad", letter: "V" },
 ] as const;
 
 export function BrowserApp() {
   const t = useT();
   const url = useOs((s) => s.browserUrl);
   const [address, setAddress] = useState(url ?? "");
-  const { notify, openUrl, openFolder } = useOs.getState();
+  const { notify, openFolder } = useOs.getState();
   const page = url ? PAGES[url] : undefined;
   // the downloads bar: the cracked game, while it's still on the disk
   const download = useOs((s) => s.files.find((f) => f.id === CRACK_FILE.id && !f.deleted));
@@ -35,8 +38,8 @@ export function BrowserApp() {
 
   const go = (e: React.FormEvent) => {
     e.preventDefault();
-    const a = address.trim().replace(/^https?:\/\//, "").replace(/\/$/, "");
-    if (PAGES[a]) openUrl(a);
+    const a = address.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
+    if (PAGES[a]) visitUrl(a);
     else if (a) notify(t.apps.browser, t.comingSoon);
   };
 
@@ -45,8 +48,8 @@ export function BrowserApp() {
       <div className="browser__tabs">
         <div className="browser__tab browser__tab--on">
           <BrowserIcon size={16} />
-          <span>{page ? page.title : t.newTab}</span>
-          <button className="browser__tab-x" onClick={() => openUrl(null)} aria-label={t.closeTab} title={t.closeTab}><CloseGlyph /></button>
+          <span dir="auto">{page ? page.title : t.newTab}</span>
+          <button className="browser__tab-x" onClick={() => visitUrl(null)} aria-label={t.closeTab} title={t.closeTab}><CloseGlyph /></button>
         </div>
         <button className="browser__newtab" aria-label={t.newTab}><PlusGlyph size={14} /></button>
       </div>
@@ -82,7 +85,7 @@ export function BrowserApp() {
             <h3>{t.topSites}</h3>
             <div className="browser__quick">
               {QUICK.map((q) => (
-                <button key={q.key} className="browser__q" onClick={() => notify(t.quick[q.key], t.comingSoon)}>
+                <button key={q.key} className="browser__q" onClick={() => (q.key === "bank" ? visitUrl(BANK_URL) : notify(t.quick[q.key], t.comingSoon))}>
                   <span className="browser__q-icon" style={{ background: q.color }}>{q.letter}</span>
                   <span>{t.quick[q.key]}</span>
                 </button>

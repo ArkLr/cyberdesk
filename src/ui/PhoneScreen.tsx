@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useGame } from "../store/gameStore";
 import { useT } from "../i18n/strings";
 import { useToast, Toast } from "./Toast";
+import { usePhone } from "./phoneStore";
 import {
   BackGlyph, BatteryGlyph, BluetoothGlyph, ChevronRightGlyph, InfoGlyph, BellGlyph,
   PhoneGlyph, ShieldGlyph, WifiGlyph, SearchGlyph, PencilGlyph,
@@ -126,6 +127,25 @@ function AppScreen({ app, onBack }: { app: PhoneApp; onBack: () => void }) {
   );
 }
 
+/** A heads-up notification sliding in at the top; tap to dismiss. */
+function Notice() {
+  const t = useT();
+  const notice = usePhone((s) => s.notice);
+  if (!notice) return null;
+  return (
+    <button key={notice.id} className="ph__notice" onClick={() => usePhone.getState().dismiss()}>
+      <span className="ph__notice-icon" aria-hidden="true">{notice.app[0]}</span>
+      <span className="ph__notice-text">
+        <span className="ph__notice-top">
+          <strong>{notice.app}</strong>
+          <small>{t.phoneNotice.now}</small>
+        </span>
+        <span>{notice.body}</span>
+      </span>
+    </button>
+  );
+}
+
 export function PhoneScreen() {
   const view = useGame((s) => s.view);
   const rect = useGame((s) => s.screenRect);
@@ -168,6 +188,7 @@ export function PhoneScreen() {
             <div className="ph__dock">{DOCK.map((a) => icon(a, false))}</div>
           </div>
         )}
+        <Notice />
         <Toast text={toast} />
         <button className="ph__homebar" onClick={() => setApp(null)} aria-label="Home" />
       </div>

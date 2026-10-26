@@ -5,8 +5,9 @@ import { useOs, type Mail, type OsFile } from "../ui/os/osStore";
 import { useGame } from "../store/gameStore";
 import { getStrings } from "../i18n/strings";
 import { useFlow } from "./flow";
+import { usePhone } from "../ui/phoneStore";
 
-export type EventId = "crack" | "photo";
+export type EventId = "crack" | "photo" | "phish";
 
 /** How many events the full game has (shown as "2 / 7"). */
 export const EVENT_COUNT = 7;
@@ -57,6 +58,50 @@ export const PHOTO_MAIL: Mail = {
   event: "photo",
 };
 
+/* ---------------- 3 · bank phishing link ---------------- */
+
+/** The bank's real site, and the look-alike the email links to. */
+export const BANK_URL = "arcbank.dz";
+export const PHISH_URL = "arcbank-verify-account.com/login";
+
+export const PHISH_MAIL: Mail = {
+  id: "phish-mail",
+  key: "arcbank",
+  from: "ArcBank Security",
+  address: "alerts@arcbank-verify-account.com",
+  folder: "inbox",
+  time: 0,
+  read: false,
+  link: PHISH_URL,
+  event: "phish",
+};
+
+const live = (id: EventId) => {
+  const flow = useFlow.getState();
+  return flow.phase === "event" && flow.current()?.id === id;
+};
+
+/** Every page the player opens in the browser comes through here. */
+export function visitUrl(url: string | null) {
+  useOs.getState().openUrl(url);
+  // typing the bank's address yourself is the safe choice
+  if (url === BANK_URL && live("phish")) useFlow.getState().choose("official");
+}
+
+/** The look-alike page's form was sent. */
+export function phishLogin() {
+  if (live("phish")) useFlow.getState().choose("login");
+}
+
+/** The delayed consequence: a few seconds later, the phone buzzes with the transfer. */
+export function stealMoney() {
+  setTimeout(() => {
+    useGame.getState().goTo("phone");
+    setTimeout(() => usePhone.getState().notify("ArcBank", t().phoneNotice.transfer), 1600);
+    setTimeout(() => useFlow.getState().consequenceDone(), 6500);
+  }, 3000);
+}
+
 export const EVENTS: GameEvent[] = [
   {
     id: "crack",
@@ -78,6 +123,17 @@ export const EVENTS: GameEvent[] = [
       os.notify(PHOTO_MAIL.from, t().mails.david.subject);
     },
   },
+  {
+    id: "phish",
+    device: "pc",
+    choices: { login: 0, official: 10, delete: 10 },
+    start: () => {
+      const os = useOs.getState();
+      os.addMail({ ...PHISH_MAIL, time: Date.now() });
+      os.openApp("mail");
+      os.notify(PHISH_MAIL.from, t().mails.arcbank.subject);
+    },
+  },
 ];
 
 export const MAX_SCORE = EVENTS.reduce((sum, e) => sum + Math.max(...Object.values(e.choices)), 0);
@@ -94,12 +150,10 @@ export function grade(score: number) {
  */
 export function fileAction(file: OsFile, action: FileAction) {
   const os = useOs.getState();
-  const flow = useFlow.getState();
-  const live = flow.phase === "event" && flow.current()?.id === file.event;
 
-  if (file.event === "crack" && live) {
+  if (file.event === "crack" && live("crack")) {
     if (action === "delete") os.deleteFile(file.id);
-    flow.choose(action === "open" ? "run" : action);
+    useFlow.getState().choose(action === "open" ? "run" : action);
     return;
   }
   // ordinary behaviour for every other file
@@ -108,18 +162,20 @@ export function fileAction(file: OsFile, action: FileAction) {
   else os.notify(file.name, t().cantOpen);
 }
 
-export type MailAction = "openAttachment" | "reply" | "delete";
+export type MailAction = "openAttachment" | "openLink" | "reply" | "delete";
 
 /** Everything the player does to an email comes through here (see fileAction). */
 export function mailAction(mail: Mail, action: MailAction) {
   const os = useOs.getState();
   const flow = useFlow.getState();
-  const live = flow.phase === "event" && flow.current()?.id === mail.event;
+  const isLive = flow.phase === "event" && flow.current()?.id === mail.event;
 
   if (action === "delete") os.deleteMail(mail.id);
   if (action === "reply") os.addMail({ id: `re-${mail.id}`, key: `re-${mail.key}`, from: mail.from, address: mail.address, folder: "sent", time: Date.now(), read: true });
+  if (action === "openLink" && mail.link) os.openUrl(mail.link);
 
-  if (mail.event === "photo" && live) {
+  // choose() ignores actions that aren't a choice of this event (e.g. following the phishing link)
+  if (isLive) {
     flow.choose(action === "openAttachment" ? "open" : action);
     return;
   }

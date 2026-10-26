@@ -43,6 +43,8 @@ export interface Mail {
   time: number;
   read: boolean;
   attachment?: { name: string; size: string };
+  /** the address the link in the body opens (the body marks its place with "{link}") */
+  link?: string;
   event?: string;
 }
 

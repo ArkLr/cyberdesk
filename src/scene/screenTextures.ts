@@ -29,7 +29,7 @@ export function drawWallpaper(
 	w: number,
 	h: number,
 ) {
-	ctx.fillStyle = "#021225";
+	ctx.fillStyle = "#a9cbf1";
 	ctx.fillRect(0, 0, w, h);
 	ctx.save();
 	ctx.translate(w / 2, h * 0.45);
@@ -59,7 +59,7 @@ function drawCrt(ctx: CanvasRenderingContext2D, w: number, h: number) {
 	// black outside the rounded corners (border-radius: 3.2% / 5.5%)
 	const rx = w * 0.032,
 		ry = h * 0.055;
-	ctx.fillStyle = "#00000017";
+	ctx.fillStyle = "#000";
 	ctx.beginPath();
 	ctx.rect(0, 0, w, h);
 	ctx.moveTo(rx, 0);

@@ -2924,6 +2924,208 @@ input:focus-visible {
 	font-size: 12px;
 }
 
+/* ---------- event 3: bank phishing ---------- */
+.mail__link {
+	color: #0067b8;
+	font-weight: 600;
+	text-decoration: underline;
+}
+.mail__status {
+	position: absolute;
+	inset-block-end: 0;
+	inset-inline-start: 0;
+	max-width: 80%;
+	padding: 3px 8px;
+	border: 1px solid var(--win-line);
+	border-start-end-radius: 4px;
+	background: #f3f3f3;
+	color: #333;
+	font-size: 12px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.cons__alert--good {
+	border-top: 5px solid #107c10;
+}
+.cons__alert--good strong {
+	color: #107c10;
+}
+.cons__opening .cons__ok {
+	color: #107c10;
+	font-size: 20px;
+	font-weight: 700;
+}
+.bank {
+	min-height: 100%;
+	display: flex;
+	flex-direction: column;
+	background: #f4f7f6;
+	color: #1d2b28;
+}
+.bank__top {
+	display: flex;
+	align-items: center;
+	gap: 40px;
+	padding: 14px 40px;
+	background: #0b5e4a;
+	color: #fff;
+}
+.bank__logo {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 22px;
+	font-weight: 700;
+}
+.bank__logo i {
+	display: grid;
+	place-items: center;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	background: #f2b632;
+	color: #0b5e4a;
+	font-style: normal;
+}
+.bank__nav {
+	display: flex;
+	gap: 26px;
+	font-size: 14px;
+	opacity: 0.9;
+}
+.bank__warn {
+	padding: 10px 40px;
+	background: #fde7e9;
+	color: #a4262c;
+	font-weight: 600;
+}
+.bank__main {
+	flex: 1;
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 30px;
+	padding: 40px;
+}
+.bank__card {
+	display: grid;
+	gap: 14px;
+	width: 360px;
+	padding: 26px 28px;
+	background: #fff;
+	border-radius: 8px;
+	box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+.bank__card h1 {
+	margin: 0 0 4px;
+	font-size: 20px;
+}
+.bank__card label {
+	display: grid;
+	gap: 5px;
+	font-size: 13px;
+	color: #4a5a56;
+}
+.bank__card input {
+	padding: 9px 10px;
+	border: 1px solid #c5d0cd;
+	border-radius: 4px;
+	background: #fff;
+	font: inherit;
+	color: #1d2b28;
+	text-align: start;
+}
+.bank__btn {
+	padding: 10px;
+	border: 0;
+	border-radius: 4px;
+	background: #0b5e4a;
+	color: #fff;
+	font-weight: 600;
+}
+.bank__btn:hover {
+	background: #094d3d;
+}
+.bank__forgot {
+	color: #0b5e4a;
+	font-size: 12px;
+}
+.bank__ok {
+	margin: 0;
+	color: #107c10;
+	font-weight: 600;
+	line-height: 1.5;
+}
+.bank__side {
+	display: flex;
+	gap: 10px;
+	width: 260px;
+	padding: 18px;
+	border-radius: 8px;
+	background: #e3efeb;
+	color: #0b5e4a;
+	font-size: 13px;
+}
+.bank__side svg {
+	flex: none;
+}
+.bank__side p {
+	margin: 0;
+	line-height: 1.5;
+}
+.bank__foot {
+	padding: 14px 40px;
+	color: #6b7a76;
+	font-size: 12px;
+}
+.ph__notice {
+	position: absolute;
+	top: 34px;
+	inset-inline: 10px;
+	z-index: 20;
+	display: flex;
+	gap: 10px;
+	padding: 12px;
+	border: 0;
+	border-radius: 18px;
+	background: rgba(250, 250, 250, 0.97);
+	color: #111;
+	text-align: start;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+	animation: ph-notice 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes ph-notice {
+	from {
+		transform: translateY(-140%);
+	}
+}
+.ph__notice-icon {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	background: #0b5e4a;
+	color: #f2b632;
+	font-weight: 700;
+}
+.ph__notice-text {
+	display: grid;
+	gap: 2px;
+	font-size: 13px;
+	line-height: 1.4;
+}
+.ph__notice-top {
+	display: flex;
+	gap: 8px;
+	align-items: baseline;
+}
+.ph__notice-top small {
+	color: #777;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.screen,
 	.win,
@@ -2936,7 +3138,8 @@ input:focus-visible {
 	.crack__popup,
 	.cons__alert,
 	.cons__scan,
-	.cons__spinner {
+	.cons__spinner,
+	.ph__notice {
 		animation: none;
 	}
 	.arrow,

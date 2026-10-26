@@ -20,7 +20,7 @@ import { useGame } from "../store/gameStore";
 const ROOM = { left: -1.7, right: 1.9, back: -1.15, front: 2.2, height: 2.7 };
 const STEEL = "#26292c";
 // how many meters one copy of each texture covers
-const WOOD_TILE = 1.2;
+const WOOD_TILE = 4;
 const WALL_TILE = 2;
 
 /** Color + normal + roughness maps (from wood_table_worn / plastered_wall_03), set to tile. */
@@ -55,17 +55,31 @@ function WallPlane({
 		const p = g.attributes.position;
 		const uv = g.attributes.uv;
 		for (let i = 0; i < uv.count; i++)
-			uv.setXY(i, (p.getX(i) + offset[0]) / WALL_TILE, (p.getY(i) + offset[1]) / WALL_TILE);
+			uv.setXY(
+				i,
+				(p.getX(i) + offset[0]) / WALL_TILE,
+				(p.getY(i) + offset[1]) / WALL_TILE,
+			);
 		return g;
 	}, [w, h, offset[0], offset[1]]);
-	return <mesh geometry={geo} material={material} position={position} receiveShadow {...props} />;
+	return (
+		<mesh
+			geometry={geo}
+			material={material}
+			position={position}
+			receiveShadow
+			{...props}
+		/>
+	);
 }
 
 function Desk() {
 	const tex = usePbrTextures(woodDiff, woodNor, woodRough);
 	const mat = useMemo(() => {
 		// box UVs run 0..1 across each face, so repeat by the desk's size in meters
-		Object.values(tex).forEach((t) => t.repeat.set(DESK.width / WOOD_TILE, DESK.depth / WOOD_TILE));
+		Object.values(tex).forEach((t) =>
+			t.repeat.set(DESK.width / WOOD_TILE, DESK.depth / WOOD_TILE),
+		);
 		// the scan is a dark walnut; lift it so the desk still reads in the night lighting
 		return new THREE.MeshStandardMaterial({
 			...tex,
@@ -139,7 +153,11 @@ function Walls() {
 	const wallTex = usePbrTextures(wallDiff, wallNor, wallRough);
 	// the plaster scan is mid-grey; lift it toward the room's original light wall color
 	const wallMat = useMemo(
-		() => new THREE.MeshStandardMaterial({ ...wallTex, color: new THREE.Color(2.1, 2.0, 1.95) }),
+		() =>
+			new THREE.MeshStandardMaterial({
+				...wallTex,
+				color: new THREE.Color(2.1, 2.0, 1.95),
+			}),
 		[wallTex],
 	);
 	return (
@@ -157,7 +175,12 @@ function Walls() {
 				<meshStandardMaterial color="#ece8e0" roughness={1} />
 			</mesh>
 			{/* back wall */}
-			<WallPlane w={W} h={ROOM.height} position={[cx, ROOM.height / 2, ROOM.back]} material={wallMat} />
+			<WallPlane
+				w={W}
+				h={ROOM.height}
+				position={[cx, ROOM.height / 2, ROOM.back]}
+				material={wallMat}
+			/>
 			{/* skirting */}
 			<mesh position={[cx, 0.05, ROOM.back + 0.006]}>
 				<boxGeometry args={[W, 0.1, 0.012]} />
@@ -174,8 +197,20 @@ function Walls() {
 			{/* left wall, built around the window opening */}
 			<group position={[ROOM.left, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
 				{/* below / above window */}
-				<WallPlane w={D} h={win.y - win.h / 2} position={[-cz, (win.y - win.h / 2) / 2, 0]} material={wallMat} castShadow />
-				<WallPlane w={D} h={ROOM.height - win.y - win.h / 2} position={[-cz, (ROOM.height + win.y + win.h / 2) / 2, 0]} material={wallMat} castShadow />
+				<WallPlane
+					w={D}
+					h={win.y - win.h / 2}
+					position={[-cz, (win.y - win.h / 2) / 2, 0]}
+					material={wallMat}
+					castShadow
+				/>
+				<WallPlane
+					w={D}
+					h={ROOM.height - win.y - win.h / 2}
+					position={[-cz, (ROOM.height + win.y + win.h / 2) / 2, 0]}
+					material={wallMat}
+					castShadow
+				/>
 				{/* left and right of window (wall-local x = -world z) */}
 				{(() => {
 					const a = -ROOM.front,
@@ -184,8 +219,20 @@ function Walls() {
 						wr = -win.z + win.w / 2;
 					return (
 						<>
-							<WallPlane w={wl - a} h={win.h} position={[(a + wl) / 2, win.y, 0]} material={wallMat} castShadow />
-							<WallPlane w={b - wr} h={win.h} position={[(wr + b) / 2, win.y, 0]} material={wallMat} castShadow />
+							<WallPlane
+								w={wl - a}
+								h={win.h}
+								position={[(a + wl) / 2, win.y, 0]}
+								material={wallMat}
+								castShadow
+							/>
+							<WallPlane
+								w={b - wr}
+								h={win.h}
+								position={[(wr + b) / 2, win.y, 0]}
+								material={wallMat}
+								castShadow
+							/>
 						</>
 					);
 				})()}

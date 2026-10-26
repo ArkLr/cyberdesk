@@ -231,11 +231,23 @@ input:focus-visible {
 	border-radius: inherit;
 	background:
 		/* scanlines */
-		repeating-linear-gradient(180deg, rgba(0, 20, 60, 0.07) 0 1px, transparent 1px 3px),
+		repeating-linear-gradient(
+			180deg,
+			rgba(0, 20, 60, 0.07) 0 1px,
+			transparent 1px 3px
+		),
 		/* glass reflection, top left */
-		radial-gradient(ellipse 60% 45% at 22% 12%, rgba(255, 255, 255, 0.16), transparent 70%),
+		radial-gradient(
+				ellipse 60% 45% at 22% 12%,
+				rgba(255, 255, 255, 0.16),
+				transparent 70%
+			),
 		/* edges fall off toward the curved corners */
-		radial-gradient(ellipse 115% 115% at 50% 50%, transparent 62%, rgba(10, 30, 70, 0.28) 100%);
+		radial-gradient(
+				ellipse 115% 115% at 50% 50%,
+				transparent 62%,
+				rgba(10, 30, 70, 0.28) 100%
+			);
 	box-shadow:
 		inset 0 0 50px 8px rgba(10, 30, 70, 0.3),
 		inset 0 0 6px 2px rgba(0, 0, 0, 0.55);
@@ -257,7 +269,13 @@ input:focus-visible {
 	inset-inline: 0;
 	top: 0;
 	height: 22%;
-	background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.1) 45%, rgba(255, 255, 255, 0.14) 50%, transparent);
+	background: linear-gradient(
+		180deg,
+		transparent,
+		rgba(255, 255, 255, 0.1) 45%,
+		rgba(255, 255, 255, 0.14) 50%,
+		transparent
+	);
 	animation: crt-roll 9s linear infinite;
 }
 @keyframes crt-flicker {
@@ -266,14 +284,26 @@ input:focus-visible {
 	}
 }
 @keyframes crt-grain {
-	0% { transform: translate(0, 0); }
-	25% { transform: translate(-6%, 4%); }
-	50% { transform: translate(5%, -7%); }
-	75% { transform: translate(-3%, -4%); }
+	0% {
+		transform: translate(0, 0);
+	}
+	25% {
+		transform: translate(-6%, 4%);
+	}
+	50% {
+		transform: translate(5%, -7%);
+	}
+	75% {
+		transform: translate(-3%, -4%);
+	}
 }
 @keyframes crt-roll {
-	from { transform: translateY(-100%); }
-	to { transform: translateY(560%); }
+	from {
+		transform: translateY(-100%);
+	}
+	to {
+		transform: translateY(560%);
+	}
 }
 @media (prefers-reduced-motion: reduce) {
 	.crt,
@@ -307,7 +337,12 @@ input:focus-visible {
 	/* light blue, brighter in the middle like a lit tube (drawWallpaper matches it) */
 	position: absolute;
 	inset: 0;
-	background: radial-gradient(ellipse 75% 70% at 50% 45%, #eaf4ff 0%, #c9e1fb 55%, #a9cbf1 100%);
+	background: radial-gradient(
+		ellipse 75% 70% at 50% 45%,
+		#eaf4ff 0%,
+		#c9e1fb 55%,
+		#a9cbf1 100%
+	);
 }
 
 /* desktop icons: a column at the top-left (top-right in Arabic) */
@@ -522,7 +557,9 @@ input:focus-visible {
 	border-radius: 2px;
 	transform: translateX(-50%);
 	background: #8a93a0;
-	transition: width 0.15s, background 0.15s;
+	transition:
+		width 0.15s,
+		background 0.15s;
 }
 .tb__app--open::after {
 	width: 6px;
@@ -1213,7 +1250,12 @@ input:focus-visible {
 	flex-direction: column;
 	align-items: center;
 	padding-top: 60px;
-	background: radial-gradient(ellipse 80% 70% at 50% 25%, #f4f9ff 0%, #dcebfc 60%, #c8def7 100%);
+	background: radial-gradient(
+		ellipse 80% 70% at 50% 25%,
+		#f4f9ff 0%,
+		#dcebfc 60%,
+		#c8def7 100%
+	);
 	color: #1b2a40;
 }
 .browser__greeting {
@@ -1244,7 +1286,9 @@ input:focus-visible {
 }
 .browser__search:focus-within {
 	border-color: #0a6ccf;
-	box-shadow: 0 6px 20px rgba(20, 60, 120, 0.16), 0 0 0 1px #0a6ccf;
+	box-shadow:
+		0 6px 20px rgba(20, 60, 120, 0.16),
+		0 0 0 1px #0a6ccf;
 }
 .browser__search input {
 	flex: 1;
@@ -1289,7 +1333,9 @@ input:focus-visible {
 	font-size: 11px;
 	letter-spacing: 0.5px;
 	text-transform: uppercase;
-	transition: transform 0.12s, background 0.12s;
+	transition:
+		transform 0.12s,
+		background 0.12s;
 }
 .browser__q:hover {
 	transform: translateY(-2px);
@@ -2013,7 +2059,12 @@ input:focus-visible {
 	position: relative;
 	min-height: 100%;
 	padding-bottom: 30px;
-	background: #120d1f repeating-linear-gradient(45deg, transparent 0 18px, rgba(255, 255, 255, 0.025) 18px 36px);
+	background: #120d1f
+		repeating-linear-gradient(
+			45deg,
+			transparent 0 18px,
+			rgba(255, 255, 255, 0.025) 18px 36px
+		);
 	color: #f2f2f2;
 	font-family: Verdana, Tahoma, sans-serif;
 }
@@ -2245,7 +2296,10 @@ input:focus-visible {
 	background: #0c0c0c;
 	border: 1px solid #333;
 	color: #c8c8c8;
-	font: 14px / 1.6 Consolas, "IBM Plex Mono", monospace;
+	font:
+		14px / 1.6 Consolas,
+		"IBM Plex Mono",
+		monospace;
 	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 .cons__term-head {
@@ -2517,6 +2571,7 @@ input:focus-visible {
 	border: 1px solid var(--win-line);
 	border-radius: 4px;
 	font: inherit;
+	background: #fff;
 	color: var(--win-text);
 }
 .mail__reply-actions {

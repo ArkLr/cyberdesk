@@ -93,6 +93,15 @@ export const CalendarIcon = (p: P) => (
   </svg>
 );
 
+/** A program (.exe): a small app window with a gear, like the Windows default program icon. */
+export const ExeIcon = (p: P) => (
+  <svg {...app(p)}>
+    <rect x="5" y="9" width="38" height="30" rx="2.5" fill="#fff" stroke="#8d98a5" />
+    <path d="M5 11.5A2.5 2.5 0 0 1 7.5 9h33a2.5 2.5 0 0 1 2.5 2.5V16H5z" fill="#2b6fc4" />
+    <circle cx="24" cy="27.5" r="5.5" fill="none" stroke="#5b6575" strokeWidth="3" strokeDasharray="3 2.2" />
+    <circle cx="24" cy="27.5" r="2.2" fill="#5b6575" />
+  </svg>
+);
 
 
 /* ---------------- UI glyphs ---------------- */

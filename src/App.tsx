@@ -3,6 +3,7 @@ import { DeskScene } from "./scene/DeskScene";
 import { LanguageSwitch, Loader, ViewArrows } from "./ui/Hud";
 import { PcScreen } from "./ui/PcScreen";
 import { PhoneScreen } from "./ui/PhoneScreen";
+import { GameDirector, GameOverlay, Progress } from "./ui/GameOverlay";
 import { useGame } from "./store/gameStore";
 
 export default function App() {
@@ -20,6 +21,9 @@ export default function App() {
       <PcScreen />
       <PhoneScreen />
       <ViewArrows />
+      <Progress />
+      <GameOverlay />
+      <GameDirector />
       <LanguageSwitch />
       <Loader />
     </>

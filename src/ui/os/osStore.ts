@@ -16,6 +16,36 @@ export interface Win {
   maximized: boolean;
 }
 
+export type FolderKey = "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
+
+/** A file on the fake disk. `event` marks files that belong to a game event. */
+export interface OsFile {
+  id: string;
+  name: string;
+  folder: FolderKey;
+  size: string;
+  kind: "exe" | "doc" | "image";
+  /** true once it's in the Recycle Bin */
+  deleted?: boolean;
+  event?: string;
+}
+
+export type MailFolder = "inbox" | "sent" | "drafts" | "junk" | "deleted";
+
+/** An email. Its subject and body are in strings.ts under `mails.<key>`. */
+export interface Mail {
+  id: string;
+  key: string;
+  from: string;
+  address: string;
+  folder: MailFolder;
+  /** when it arrived (ms) */
+  time: number;
+  read: boolean;
+  attachment?: { name: string; size: string };
+  event?: string;
+}
+
 export interface Note {
   id: number;
   title: string;
@@ -39,6 +69,16 @@ interface OsState {
   topZ: number;
   startOpen: boolean;
   notes: Note[];
+  files: OsFile[];
+  /** the address the browser shows; null = new-tab page */
+  browserUrl: string | null;
+  /** asks File Explorer to show a folder (n changes on every request) */
+  folderRequest: { folder: FolderKey; n: number } | null;
+  mails: Mail[];
+  /** File Explorer's View > "File name extensions" (off by default, like Windows) */
+  showExt: boolean;
+  /** the webcam light next to the screen */
+  webcamOn: boolean;
 
   openApp: (app: AppId) => void;
   close: (id: string) => void;
@@ -52,6 +92,19 @@ interface OsState {
   setStart: (open: boolean) => void;
   notify: (title: string, body: string) => void;
   dismiss: (id: number) => void;
+  addFile: (file: OsFile) => void;
+  /** move a file to the Recycle Bin */
+  deleteFile: (id: string) => void;
+  /** remove a file for good (e.g. quarantined by the antivirus) */
+  removeFile: (id: string) => void;
+  openUrl: (url: string | null) => void;
+  openFolder: (folder: FolderKey) => void;
+  addMail: (mail: Mail) => void;
+  /** to Deleted items; deleting from there removes it for good */
+  deleteMail: (id: string) => void;
+  markRead: (id: string) => void;
+  setShowExt: (on: boolean) => void;
+  setWebcam: (on: boolean) => void;
 }
 
 let noteId = 0;
@@ -61,6 +114,12 @@ export const useOs = create<OsState>((set, get) => ({
   topZ: 1,
   startOpen: false,
   notes: [],
+  files: [],
+  browserUrl: null,
+  folderRequest: null,
+  mails: [{ id: "welcome", key: "welcome", from: "Arc Mail", address: "team@arcmail.example", folder: "inbox", time: Date.now() - 86_400_000, read: true }],
+  showExt: false,
+  webcamOn: false,
 
   openApp: (app) => {
     const existing = get().windows.find((w) => w.app === app);
@@ -107,7 +166,37 @@ export const useOs = create<OsState>((set, get) => ({
     setTimeout(() => get().dismiss(id), 4500);
   },
   dismiss: (id) => set({ notes: get().notes.filter((n) => n.id !== id) }),
+  addFile: (file) => {
+    if (get().files.some((f) => f.id === file.id)) return;
+    set({ files: [...get().files, file] });
+  },
+  deleteFile: (id) => set({ files: get().files.map((f) => (f.id === id ? { ...f, deleted: true } : f)) }),
+  removeFile: (id) => set({ files: get().files.filter((f) => f.id !== id) }),
+  openUrl: (browserUrl) => {
+    set({ browserUrl });
+    get().openApp("browser");
+  },
+  openFolder: (folder) => {
+    set({ folderRequest: { folder, n: (get().folderRequest?.n ?? 0) + 1 } });
+    get().openApp("files");
+  },
+  addMail: (mail) => {
+    if (get().mails.some((m) => m.id === mail.id)) return;
+    set({ mails: [mail, ...get().mails] });
+  },
+  deleteMail: (id) =>
+    set({
+      mails: get()
+        .mails.filter((m) => !(m.id === id && m.folder === "deleted"))
+        .map((m) => (m.id === id ? { ...m, folder: "deleted" } : m)),
+    }),
+  markRead: (id) => set({ mails: get().mails.map((m) => (m.id === id ? { ...m, read: true } : m)) }),
+  setShowExt: (showExt) => set({ showExt }),
+  setWebcam: (webcamOn) => set({ webcamOn }),
 }));
+
+/** Windows hides the last extension unless "File name extensions" is on: IMG_2041.jpg.exe -> IMG_2041.jpg */
+export const shownName = (name: string, showExt: boolean) => (showExt ? name : name.replace(/\.[^.]+$/, ""));
 
 /** The window currently in front (not minimized), if any. */
 export const activeWindowId = (wins: Win[]) => {

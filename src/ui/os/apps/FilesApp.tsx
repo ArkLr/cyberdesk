@@ -1,37 +1,49 @@
 // File Explorer: address bar, command bar, navigation pane and folder view.
 // Also used for the Recycle Bin (mode="bin").
-import { useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
-  BackGlyph, BinIcon, ChevronRightGlyph, CopyGlyph, CutGlyph, DriveIcon, FOLDER_ICONS, ForwardGlyph,
+  BackGlyph, BinIcon, ChevronRightGlyph, CopyGlyph, CutGlyph, DocGlyph, DriveIcon, ExeIcon, FOLDER_ICONS, ForwardGlyph,
   HomeGlyph, MoreGlyph, PasteGlyph, PcGlyph, PlusGlyph, ReloadGlyph, RenameGlyph, RestoreItemsGlyph,
-  SearchGlyph, ShareGlyph, SortGlyph, TrashGlyph, UpGlyph, ViewGlyph,
+  PictureGlyph, SearchGlyph, ShareGlyph, ShieldGlyph, SortGlyph, TrashGlyph, UpGlyph, ViewGlyph,
 } from "../icons";
-import { useOs } from "../osStore";
+import { useOs, shownName, type FolderKey, type OsFile } from "../osStore";
+import { ScaleContext } from "../scale";
+import { fileAction, type FileAction } from "../../../game/events";
 import { useT } from "../../../i18n/strings";
 
-type FolderKey = keyof typeof FOLDER_ICONS;
 const FOLDERS: FolderKey[] = ["desktop", "downloads", "documents", "pictures", "music", "videos"];
 
-/** What's inside each folder. Empty for now; the download events will add files here. */
-const CONTENTS: Record<FolderKey, string[]> = {
-  desktop: [],
-  documents: [],
-  downloads: [],
-  music: [],
-  pictures: [],
-  videos: [],
-};
+function FileIcon({ file, size }: { file: OsFile; size: number }) {
+  if (file.kind === "exe") return <ExeIcon size={size} />;
+  const Glyph = file.kind === "image" ? PictureGlyph : DocGlyph;
+  return <Glyph size={size} />;
+}
 
 export function FilesApp({ mode = "files" }: { mode?: "files" | "bin" }) {
   const t = useT();
   const openApp = useOs((s) => s.openApp);
-  const [path, setPath] = useState<FolderKey | null>(null); // null = This PC
+  const allFiles = useOs((s) => s.files);
+  const folderRequest = useOs((s) => s.folderRequest);
+  const scale = useContext(ScaleContext);
+  const root = useRef<HTMLDivElement>(null);
+  const [path, setPath] = useState<FolderKey | null>(mode === "files" ? folderRequest?.folder ?? null : null); // null = This PC
   const [history, setHistory] = useState<(FolderKey | null)[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; file: OsFile } | null>(null);
+  const [viewMenu, setViewMenu] = useState(false);
+  const showExt = useOs((s) => s.showExt);
   const open = (p: FolderKey | null) => {
+    setSelected(null);
     if (p === path) return;
     setHistory((h) => [...h, path]);
     setPath(p);
   };
+
+  // "Show in folder" from the browser
+  useEffect(() => {
+    if (mode === "files" && folderRequest) open(folderRequest.folder);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folderRequest?.n]);
   const back = () => {
     if (!history.length) return;
     setPath(history[history.length - 1]);
@@ -40,7 +52,23 @@ export function FilesApp({ mode = "files" }: { mode?: "files" | "bin" }) {
 
   const bin = mode === "bin";
   const here = bin ? t.apps.bin : path ? t.folders[path] : t.thisPc;
-  const count = bin ? 0 : path ? CONTENTS[path].length : FOLDERS.length + 1;
+  const files = bin ? allFiles.filter((f) => f.deleted) : allFiles.filter((f) => !f.deleted && f.folder === path);
+  const count = bin || path ? files.length : FOLDERS.length + 1;
+  const selectedFile = files.find((f) => f.id === selected);
+
+  const act = (file: OsFile, action: FileAction) => {
+    setMenu(null);
+    setSelected(null);
+    fileAction(file, action);
+  };
+  const openMenu = (e: React.MouseEvent, file: OsFile) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelected(file.id);
+    // the desktop is scaled, so convert screen pixels back to desktop pixels
+    const r = root.current!.getBoundingClientRect();
+    setMenu({ x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale, file });
+  };
   const HereIcon = path ? FOLDER_ICONS[path] : null;
 
   // the command bar: the usual commands, greyed out because nothing is selected
@@ -49,7 +77,7 @@ export function FilesApp({ mode = "files" }: { mode?: "files" | "bin" }) {
     : null;
 
   return (
-    <div className="files">
+    <div className="files" ref={root} onClick={() => { setMenu(null); setViewMenu(false); }} onContextMenu={(e) => e.preventDefault()}>
       <div className="files__bar">
         <button className="files__nav" onClick={back} disabled={!history.length} aria-label="Back"><BackGlyph /></button>
         <button className="files__nav" disabled aria-label="Forward"><ForwardGlyph /></button>
@@ -86,13 +114,40 @@ export function FilesApp({ mode = "files" }: { mode?: "files" | "bin" }) {
               { label: t.cmd.paste, Glyph: PasteGlyph },
               { label: t.cmd.rename, Glyph: RenameGlyph },
               { label: t.cmd.share, Glyph: ShareGlyph },
-              { label: t.cmd.delete, Glyph: TrashGlyph },
             ].map((c) => (
               <button key={c.label} className="files__cmd files__cmd--icon" disabled title={c.label} aria-label={c.label}><c.Glyph /></button>
             ))}
+            <button
+              className="files__cmd files__cmd--icon"
+              disabled={!selectedFile}
+              onClick={() => selectedFile && act(selectedFile, "delete")}
+              title={t.cmd.delete}
+              aria-label={t.cmd.delete}
+            >
+              <TrashGlyph />
+            </button>
             <span className="files__sep" />
             <button className="files__cmd"><SortGlyph /> {t.cmd.sort}</button>
-            <button className="files__cmd"><ViewGlyph /> {t.cmd.view}</button>
+            <span className="files__view-wrap">
+              <button
+                className="files__cmd"
+                aria-expanded={viewMenu}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewMenu((v) => !v);
+                }}
+              >
+                <ViewGlyph /> {t.cmd.view}
+              </button>
+              {viewMenu && (
+                <div className="ctx files__view-menu" role="menu" onClick={(e) => e.stopPropagation()}>
+                  <div className="ctx__label">{t.viewMenu.show}</div>
+                  <button role="menuitemcheckbox" aria-checked={showExt} className="ctx__item" onClick={() => useOs.getState().setShowExt(!showExt)}>
+                    <span className="ctx__check">{showExt ? "✓" : ""}</span> {t.viewMenu.ext}
+                  </button>
+                </div>
+              )}
+            </span>
           </>
         )}
         <button className="files__cmd files__cmd--icon" aria-label="More"><MoreGlyph /></button>
@@ -118,7 +173,32 @@ export function FilesApp({ mode = "files" }: { mode?: "files" | "bin" }) {
         </nav>
 
         <section className="files__view">
-          {bin ? (
+          {(bin || path) && files.length ? (
+            <div className="files__grid">
+              {files.map((f) => (
+                <button
+                  key={f.id}
+                  className={`files__item files__file ${selected === f.id ? "files__item--on" : ""}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenu(null);
+                    setSelected(f.id);
+                  }}
+                  onDoubleClick={() => !bin && act(f, "open")}
+                  onContextMenu={(e) => !bin && openMenu(e, f)}
+                  onKeyDown={(e) => {
+                    if (bin) return;
+                    if (e.key === "Enter") act(f, "open");
+                    if (e.key === "Delete") act(f, "delete");
+                  }}
+                  title={`${shownName(f.name, showExt)}\n${f.size}`}
+                >
+                  <FileIcon file={f} size={56} />
+                  <span dir="ltr">{shownName(f.name, showExt)}</span>
+                </button>
+              ))}
+            </div>
+          ) : bin ? (
             <div className="files__empty">
               <BinIcon size={96} />
               <span>{t.binEmpty}</span>
@@ -147,7 +227,7 @@ export function FilesApp({ mode = "files" }: { mode?: "files" | "bin" }) {
                 </span>
               </button>
             </>
-          ) : CONTENTS[path].length ? null : (
+          ) : (
             <div className="files__empty">
               {HereIcon && <HereIcon size={96} />}
               <span>{t.emptyFolder}</span>
@@ -155,6 +235,14 @@ export function FilesApp({ mode = "files" }: { mode?: "files" | "bin" }) {
           )}
         </section>
       </div>
+      {menu && (
+        <div className="ctx" style={{ left: menu.x, top: menu.y }} role="menu" onClick={(e) => e.stopPropagation()}>
+          <button role="menuitem" className="ctx__item ctx__item--bold" onClick={() => act(menu.file, "open")}>{t.fileMenu.open}</button>
+          <button role="menuitem" className="ctx__item" onClick={() => act(menu.file, "scan")}><ShieldGlyph /> {t.fileMenu.scan}</button>
+          <span className="ctx__sep" />
+          <button role="menuitem" className="ctx__item" onClick={() => act(menu.file, "delete")}><TrashGlyph /> {t.fileMenu.delete}</button>
+        </div>
+      )}
       <div className="files__status">{t.items(count)}</div>
     </div>
   );

@@ -17,6 +17,7 @@ import { BrowserApp } from "./apps/BrowserApp";
 import { FilesApp } from "./apps/FilesApp";
 import { useT } from "../../i18n/strings";
 import { Wallpaper } from "./Wallpaper";
+import { Consequence } from "./Consequence";
 
 const DESKTOP_ICONS: AppId[] = ["bin", "files", "browser", "mail"];
 
@@ -51,6 +52,12 @@ function Notifications() {
 			))}
 		</div>
 	);
+}
+
+/** The camera's "in use" light, at the top of the screen. */
+function WebcamLight() {
+	const on = useOs((s) => s.webcamOn);
+	return on ? <span className="os__cam" aria-hidden="true" /> : null;
 }
 
 export function Desktop() {
@@ -104,6 +111,8 @@ export function Desktop() {
 
 			<StartMenu />
 			<Notifications />
+			<Consequence />
+			<WebcamLight />
 			<Taskbar />
 		</div>
 	);

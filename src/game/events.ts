@@ -106,7 +106,7 @@ export function phishLogin() {
 export function stealMoney() {
   setTimeout(() => {
     useGame.getState().goTo("phone");
-    setTimeout(() => usePhone.getState().notify("ArcBank", t().phoneNotice.transfer), 1600);
+    setTimeout(() => usePhone.getState().receiveSms("ArcBank", "transfer", t().sms.transfer), 1600);
     setTimeout(() => useFlow.getState().consequenceDone(), 6500);
   }, 3000);
 }
@@ -247,8 +247,7 @@ function startVishing() {
   const phone = usePhone.getState();
   phone.dismiss();
   phone.clearCall();
-  phone.addSms({ id: "code", from: "ArcBank", key: "code", time: Date.now() });
-  phone.notify("ArcBank", t().sms.code);
+  phone.receiveSms("ArcBank", "code", t().sms.code);
   setTimeout(() => live("vishing") && usePhone.getState().startCall({ who: "ArcBank", number: BANK_NUMBER, incoming: true }), RING_DELAY);
 }
 
@@ -285,7 +284,7 @@ export function pickOption(id: string) {
         [0, say(true, "meRead")],
         [2600, say(false, "vishThanks")],
         [2800, end],
-        [1600, () => usePhone.getState().notify("ArcBank", t().phoneNotice.emptied)],
+        [1600, () => usePhone.getState().receiveSms("ArcBank", "emptied", t().sms.emptied)],
       ],
       consequenceDone,
       4500,

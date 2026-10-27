@@ -157,6 +157,8 @@ const strings = {
 		},
 		sms: {
 			code: "ArcBank: your code is 482913. Never share this code.",
+			transfer: "Transfer of 85,000 DZD to account DZ58 •••• 9917 completed.",
+			emptied: "Transfer of 240,000 DZD completed. Available balance: 0 DZD.",
 		},
 		contacts: {
 			title: "Contacts",
@@ -377,8 +379,6 @@ const strings = {
 		},
 		phoneNotice: {
 			now: "now",
-			transfer: "Transfer of 85,000 DZD to account DZ58 •••• 9917 completed.",
-			emptied: "Transfer of 240,000 DZD completed. Available balance: 0 DZD.",
 		},
 
 		// ---- game flow ----
@@ -751,6 +751,9 @@ const strings = {
 		},
 		sms: {
 			code: "ArcBank: رمزك هو 482913. لا تشارك هذا الرمز أبدًا.",
+			transfer:
+				"تم تحويل 85,000 دج إلى الحساب \u2066DZ58 •••• 9917\u2069 بنجاح.",
+			emptied: "تم تحويل 240,000 دج بنجاح. الرصيد المتاح: 0 دج.",
 		},
 		contacts: {
 			title: "جهات الاتصال",
@@ -965,9 +968,6 @@ const strings = {
 		},
 		phoneNotice: {
 			now: "الآن",
-			transfer:
-				"تم تحويل 85,000 دج إلى الحساب \u2066DZ58 •••• 9917\u2069 بنجاح.",
-			emptied: "تم تحويل 240,000 دج بنجاح. الرصيد المتاح: 0 دج.",
 		},
 
 		game: {

@@ -44,6 +44,8 @@ interface PhoneState {
   notify: (app: string, body: string) => void;
   dismiss: () => void;
   addSms: (sms: Sms) => void;
+  /** a text arrives: it's kept in Messages and pops up as a heads-up notification */
+  receiveSms: (from: string, key: string, body: string) => void;
   startCall: (call: Pick<Call, "who" | "number" | "incoming"> & Partial<Omit<Call, "id">>) => void;
   answer: () => void;
   say: (line: CallLine) => void;
@@ -62,6 +64,10 @@ export const usePhone = create<PhoneState>((set, get) => ({
   notify: (app, body) => set({ notice: { id: Date.now(), app, body } }),
   dismiss: () => set({ notice: null }),
   addSms: (sms) => set({ sms: [sms, ...get().sms.filter((s) => s.id !== sms.id)] }),
+  receiveSms: (from, key, body) => {
+    get().addSms({ id: key, from, key, time: Date.now() });
+    get().notify(from, body);
+  },
   startCall: (call) =>
     // a call takes over the screen, so the heads-up notification goes away
     set({ notice: null, call: { id: ++callId, state: call.incoming ? "ringing" : "active", lines: [], options: [], since: Date.now(), ...call } }),

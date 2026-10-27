@@ -7,6 +7,7 @@ import {
 	type AppId,
 	DESKTOP_W,
 	DESKTOP_H,
+	type Win,
 } from "./osStore";
 import { APP_ICONS, CloseGlyph } from "./icons";
 import { Window } from "./Window";
@@ -24,12 +25,12 @@ import { Consequence } from "./Consequence";
 
 const DESKTOP_ICONS: AppId[] = ["bin", "files", "browser", "mail"];
 
-function AppContent({ app }: { app: AppId }) {
-	switch (app) {
+function AppContent({ win }: { win: Win }) {
+	switch (win.app) {
 		case "mail":
 			return <MailApp />;
 		case "browser":
-			return <BrowserApp />;
+			return <BrowserApp win={win} />;
 		case "files":
 			return <FilesApp />;
 		case "bin":
@@ -121,7 +122,7 @@ export function Desktop() {
 
 			{windows.map((w) => (
 				<Window key={w.id} win={w} active={w.id === active}>
-					<AppContent app={w.app} />
+					<AppContent win={w} />
 				</Window>
 			))}
 

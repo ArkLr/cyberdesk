@@ -1128,6 +1128,12 @@ input:focus-visible {
 	padding: 0 8px;
 	background: var(--win-mica);
 }
+/* minimize / maximize / close, pushed to the end of the tab strip */
+.browser__tabs .win__caps {
+	align-self: stretch;
+	margin-inline-start: auto;
+	margin-inline-end: -8px;
+}
 .browser__tab {
 	display: flex;
 	align-items: center;

@@ -398,50 +398,6 @@ function Notebook() {
 	);
 }
 
-function Plant() {
-	const leaves = useMemo(
-		() =>
-			Array.from({ length: 9 }, (_, i) => ({
-				a: (i / 9) * Math.PI * 2,
-				tilt: 0.5 + (i % 3) * 0.2,
-				s: 0.8 + (i % 4) * 0.12,
-			})),
-		[],
-	);
-	return (
-		<group position={[-1.38, 0, -0.85]}>
-			<mesh position={[0, 0.17, 0]} castShadow receiveShadow>
-				<cylinderGeometry args={[0.15, 0.11, 0.34, 32]} />
-				<meshStandardMaterial color="#b9b2a5" roughness={0.9} />
-			</mesh>
-			{leaves.map((l, i) => (
-				<mesh
-					key={i}
-					position={[Math.cos(l.a) * 0.08, 0.5, Math.sin(l.a) * 0.08]}
-					rotation={[Math.sin(l.a) * l.tilt, 0, -Math.cos(l.a) * l.tilt]}
-					castShadow
-				>
-					<sphereGeometry args={[0.07 * l.s, 12, 12]} />
-					<meshStandardMaterial
-						color={i % 2 ? "#3f6b45" : "#4f7d4f"}
-						roughness={0.7}
-					/>
-				</mesh>
-			))}
-			{leaves.map((l, i) => (
-				<mesh
-					key={`s${i}`}
-					position={[Math.cos(l.a) * 0.04, 0.42, Math.sin(l.a) * 0.04]}
-					rotation={[Math.sin(l.a) * l.tilt, 0, -Math.cos(l.a) * l.tilt]}
-				>
-					<cylinderGeometry args={[0.004, 0.006, 0.18, 6]} />
-					<meshStandardMaterial color="#3e5b36" />
-				</mesh>
-			))}
-		</group>
-	);
-}
-
 function Shelf() {
 	const books = useMemo(() => {
 		const colors = [
@@ -631,7 +587,6 @@ export function Room() {
 			<Lamp />
 			<Mug />
 			<Notebook />
-			<Plant />
 			<Shelf />
 			<StickyNote />
 			<WallArt />

@@ -75,7 +75,6 @@ export function Desktop() {
 	const t = useT();
 	const active = activeWindowId(windows);
 
-	// Ctrl+Shift+Esc opens Task Manager, like on Windows
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.ctrlKey && e.shiftKey && e.key === "Escape") openApp("taskmgr");

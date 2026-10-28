@@ -49,7 +49,7 @@ export const CAMERA = {
 		target: new THREE.Vector3(0, 1.0, -0.6),
 	},
 	// how much of the view the screen fills (1 = edge to edge). A bit under 1 keeps the bezel in view.
-	pcFill: 0.99,
+	pcFill: 0.89,
 	phoneFill: 0.92,
 };
 

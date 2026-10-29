@@ -3,7 +3,6 @@ import { useContext, useEffect, useState } from "react";
 import { useOs, activeWindowId, type AppId, DESKTOP_W } from "./osStore";
 import {
 	APP_ICONS,
-	BatteryGlyph,
 	BellGlyph,
 	ChevronUpGlyph,
 	SearchGlyph,
